@@ -22,20 +22,23 @@
 
 Exit: state transitions, invalidation, loop breaking, and audit pass automated tests.
 
-## Phase 1 — critical vertical spike
+## Phase 1 — reusable authentication boilerplate
 
-- Build a minimal Expo application with an isolated Supabase E2E environment.
-- Implement auth plus an RLS-protected create/read flow.
-- Add a cold-start deep link, offline failure, restart persistence, and platform-specific design state.
-- Build installable iOS and Android artifacts.
-- Author deterministic `.ad` scenarios.
-- Prove the approved P0/P1 hybrid boundary, plaintext sink discipline, and cross-platform secure-storage behavior without claiming field encryption or E2EE.
-- Repeat the suite five times per platform.
-- Produce Figma/current/diff evidence.
-- Trigger a deliberate device failure and prove correct classification.
+- Import and adapt the useful pinned upstream baseline into `apps/reference-mobile` before product scaffolding.
+- Establish one workspace dependency graph, exact Expo/native versions, identifiers, environments, build profiles, and provider capability configuration.
+- Implement the application-owned auth/session contract with Supabase as the default adapter.
+- Implement email/password registration, verification, login, and recovery on iOS and Android.
+- Implement deterministic phone OTP registration/login plus bounded real-SMS canary and abuse/rate controls.
+- Implement Google on iOS/Android, native Apple on iOS, and capability-gated Apple on Android.
+- Add protected profile RLS, secure session lifecycle, logout, account deletion, Apple revocation, and store deletion-link contract.
+- Build installable development and release-like iOS/Android artifacts and author deterministic `.ad` scenarios.
+- Prove P1 session protection, plaintext sink discipline, callback/nonce/state safety, identity-collision policy, and platform-specific behavior.
+- Produce semantic, visual, backend, provider, storage, accessibility, build, device, and human-canary evidence.
+- Generate a clean downstream application and repeat the critical suite without undocumented repair.
+- Trigger deliberate native/provider failures and prove correct classification without weakening acceptance.
 - Exercise H1, H2, and H3 without bypasses.
 
-Exit: one requirement travels from specification to internal release with a complete evidence bundle and known execution cost.
+Exit: the clean boilerplate and one generated project satisfy the auth acceptance pack on iOS and Android with complete evidence and known execution cost.
 
 ## Phase 2 — neutral orchestration
 
@@ -45,10 +48,10 @@ Exit: one requirement travels from specification to internal release with a comp
 - Add role and capability authorization checks.
 - Add cost, duration, and device lease budgets.
 
-## Phase 3 — upstream adaptation
+## Phase 3 — remaining upstream workflow adaptation
 
-- Import the pinned upstream snapshot.
-- Port ideation, brainstorming, planning, review, compound, and freshness concepts.
+- Audit the Phase 1 upstream import and update the pinned snapshot deliberately.
+- Port remaining ideation, brainstorming, planning, review, compound, and freshness concepts.
 - Rewrite execution and autopilot against this kernel.
 - Replace all Maestro references and deliverables.
 - Audit guidebook claims and remove web-only or pre-release defaults.

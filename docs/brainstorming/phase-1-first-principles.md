@@ -1,150 +1,144 @@
-# Phase 1 brainstorming — prove the delivery spine
+# Phase 1 brainstorming — prove the reusable auth boilerplate
 
 Status: discussion draft before Phase 1 H1
+Supersedes: private-notes-as-product direction
 
 ## First-principles objective
 
-Phase 1 should answer one question: **can this repository repeatedly turn an approved business scenario into trustworthy iOS and Android evidence without a human babysitting every tool call or an agent bypassing human judgment?**
+Phase 1 must prove that this repository is a real starting point for future native applications, not merely a successful demo run.
 
-It should not maximize feature count. A small native feature with authentication, persistence, authorization, offline recovery, cold-start routing, visual states, secure session storage, backend oracles, two native platforms, and a release-like artifact exercises nearly every hard boundary.
+The product has two inseparable layers:
 
-The existing private-notes spike is a good test subject, but the present specification combines three uncertainties:
+1. an Expo/React Native boilerplate with complete authentication and account lifecycle;
+2. an agentic operating system that can specify, build, debug, verify, review, release, and monitor that native product with human H1/H2/H3 decisions.
 
-1. whether the agentic control plane works;
-2. whether the native toolchain and `agent-device` work on both platforms;
-3. whether the product/data architecture is correct.
+The private-notes concept is no longer the Phase 1 product. At most, a tiny protected profile or later private-note feature can serve as a downstream `develop-feature` canary after auth is stable.
 
-We should sequence them so a failure has one likely owner.
+## Proposed Phase 1 sequence
 
-## Proposed sequence
+### Phase 1A — deterministic auth core
 
-### Phase 1A — delivery-spine canary
+- integrate the useful parts of the pinned upstream template into `apps/reference-mobile`;
+- establish one workspace manager, lockfile, Expo baseline, identifiers, environments, and native build profiles;
+- implement the application-owned auth/session contract and Supabase adapter;
+- email/password registration, verification, returning login, and recovery;
+- phone OTP registration/login using fixed non-production OTP fixtures;
+- protected profile row and owner-only RLS;
+- platform-protected session persistence, route guards, cold start, refresh, revocation, and logout;
+- error taxonomy, offline/cancel/retry paths, visual states, accessibility, and plaintext sink checks;
+- deterministic `agent-device` scenarios on pinned iOS and Android targets.
 
-Build the smallest complete vertical slice under the existing P0/P1 protection boundary:
+This stage proves the majority of product behavior without depending on Google/Apple portals or real SMS delivery.
 
-- email/password fixture authentication;
-- owner-only note create, list, open, and persistence after restart;
-- cross-user RLS denial proven by a backend oracle;
-- cold-start deep link;
-- offline submit failure with preserved input and idempotent retry;
-- default, loading, error, and populated visual states;
-- P1 platform-protected session credentials and no unintended plaintext sinks;
-- release-like iOS simulator and Android emulator builds;
-- deterministic `.ad` scenarios run by `agent-device`;
-- H1 specification, H2 evidence acceptance, and a dry-run H3 over exact internal artifacts;
-- one deliberate native/tooling failure classified and recovered without weakening tests.
+### Phase 1B — native social-provider boundary
 
-Do not add collaboration, push, social login, rich text, background sync, analytics, or public stores. Those add breadth, not confidence in the spine.
+- Google authentication on installed iOS and Android builds;
+- native Apple authentication on iOS;
+- capability-gated Apple authentication on Android;
+- provider-specific state/nonce, callback, cancellation, denial, duplicate callback, account collision, and token handling;
+- real-provider canaries with synthetic accounts, redacted evidence, and `requires-human` where provider UI or credentials cannot be automated credibly;
+- configuration preflight for Google Cloud, Apple Developer, Supabase, redirect URLs, capabilities, and provider branding.
 
-### Phase 1B — one security-boundary variant
+This stage must not fake Google or Apple success through a mocked provider and call it E2E. Mocks prove our adapter behavior; a bounded real-provider canary proves the external boundary.
 
-Only after 1A is repeatable, choose one separate critical run:
+### Phase 1C — store-safe account lifecycle and template proof
 
-- **P2 backend envelope encryption** if the threat is database dumps or storage-layer compromise while the backend remains trusted; or
-- **P3 client E2EE** if service operators must not read note content.
+- recent-auth confirmation and complete in-app account deletion;
+- deletion/cascade of application data and Apple token revocation;
+- external account-deletion URL contract for Google Play;
+- privacy/terms/support configuration gates;
+- release-like internal iOS and Android artifacts;
+- clean downstream-project generation and rebranding;
+- rerun the critical auth suite in the generated project;
+- exercise H1, H2, dry-run H3, monitoring, debugger, behavior audit, and evidence binding end to end.
 
-Do not claim or build both at once. P3 changes recovery, multi-device key transfer, search, sharing, observability, backups, incident response, and test oracles. It is a product architecture, not a library toggle.
+Only the completion of 1A–1C satisfies the repository goal. The stages control blast radius; they do not reduce the final scope.
 
 ## Recommended repository shape
 
-Keep the agentic control plane at the repository root and place the canary product beneath it:
-
 ```text
 apps/
-  reference-mobile/       Expo/React Native application
+  reference-mobile/       runnable and releasable template application
 packages/
-  contracts/              shared schemas and typed boundaries when proven useful
-  test-fixtures/           deterministic, non-secret fixture definitions
-  design-tokens/           platform-aware tokens after the visual contract is approved
-.agentic/                  state machine, policies, schemas, workflow definitions
-docs/                      guidebook, requirements, decisions, evidence indexes
+  contracts/              only proven cross-boundary contracts
+  test-fixtures/           deterministic non-secret auth/device fixtures
+.agentic/                  state machine, policies, schemas, workflows, monitoring
+docs/                      product goal, guidebook, requirements, decisions, evidence indexes
 ```
 
-This makes the repository reusable as a factory without confusing the reference app with the control plane. Do not create shared packages until two consumers or a real boundary exists.
+Auth should initially live as a cohesive feature in the reference app with an application-owned port around Supabase. Extract a package only after the clean-generation test proves the useful boundary. A generic auth framework created before one working implementation would increase abstraction without increasing reuse.
 
-Package-manager choice remains open until the pinned upstream template is inspected at the selected commit. Prefer one workspace manager and one lockfile for the whole repository; do not maintain npm at the root and a second unresolved dependency graph in the app without an explicit reason.
+Use one package manager and one lockfile for the entire repository. The final choice follows inspection of the pinned upstream revision; do not combine unrelated root and app dependency graphs accidentally.
 
 ## Native verification ladder
 
-Use escalating cost and realism:
+1. Host checks: types, lint, unit, schema, callback/nonce/state and error contracts.
+2. Local Supabase: email inbox, fixed phone OTP, migrations, profiles and RLS integration.
+3. Installed development builds: deterministic email/phone/session scenarios through `agent-device` on one pinned iOS simulator and Android emulator.
+4. Provider canaries: real Google on both platforms, Apple on iOS, Apple on Android when enabled, with synthetic accounts and human/provider boundary clearly recorded.
+5. Release-like builds: cold start, deep links, lifecycle, secure storage, permissions, account deletion, provider capability fingerprints.
+6. Physical-device/manual pass: autofill, native account sheets, biometrics where used, screen reader, keyboard, and final H2/H3 QA.
+7. Generated-project self-test: repeat the critical suite after new identifiers and isolated backend configuration.
 
-1. Linux/host checks: types, lint, unit, schema, migration and RLS integration tests.
-2. Local native canary: one pinned iOS simulator and one pinned Android emulator, development build, `agent-device` smoke.
-3. Release-mode local/internal builds: native configuration fingerprints, cold start, lifecycle, permissions, deep link, storage, network recovery.
-4. Scheduled matrix: additional supported OS/device profiles only after the primary pair is stable.
-5. H2 physical-device/manual accessibility smoke where automation cannot supply trustworthy evidence.
-6. H3 exact internal-distribution artifacts, then only a human-authorized release workflow.
+Expo Go, a web rendering, one platform, a mocked provider, or a UI-only assertion never proves the native cross-platform boundary.
 
-iOS and Android results are independent. Passing one platform, Expo Go, or a web rendering never proves the other native platform.
+## Backend and fixture topology
 
-## Backend and fixtures
+- local Supabase for migrations, RLS, local inbox, deterministic email callbacks, and fixed phone test OTP;
+- isolated hosted E2E for installed builds, real provider callbacks, and release-like canaries;
+- identical committed migrations and auth-relevant configuration contracts;
+- synthetic email, phone, Google, and Apple identities owned outside the agent;
+- unique per-run namespaces and idempotent reset where the provider permits it;
+- no production access and no service-role, SMS, OAuth, Apple, or user credential in the app or evidence.
 
-Recommended topology:
+Real SMS is a bounded infrastructure canary, not a CI dependency. Provider UIs and anti-abuse systems are external behavior; retries have budgets and provider failures receive their own classification.
 
-- local Supabase for fast PR migration/RLS/integration checks;
-- an isolated hosted E2E project for device and internal-artifact verification when the application cannot reliably reach local services;
-- the same migrations, RLS policies, and deterministic fixture contract in both;
-- two synthetic users, unique per-run data namespace, idempotent seed/reset, and an oracle with no production access;
-- no service-role credential in the application bundle or captured evidence.
+## Identity and account rules
 
-A local-only backend is cheaper but can hide networking, TLS, lifecycle, and remote-build problems. A hosted-only backend is slower, costs more, and makes fixture isolation harder. The dual topology is justified only if drift is continuously tested.
-
-## Visual truth
-
-For 1A, the committed SVG plus visual contract can be the approved independent source. The implementation screenshot must never update its own reference. Verification should combine semantic assertions with normalized regional comparison; full-screen pixel identity across iOS and Android is a false target.
-
-If live Figma becomes the design source, install and configure the Figma connector as a separate trust decision, pin node/frame/version identifiers in the specification, export durable references, and retain a human visual H2. Figma access is useful, but it is not required to prove the first pipeline.
+- All methods converge on one normalized application session, but not every identifier is silently merged into one account.
+- Verified provider identities may follow Supabase's approved automatic-linking behavior.
+- Phone-only, Apple private-relay, unrelated, or ambiguous identities remain separate unless a later explicit linking flow requires recent authentication.
+- Manual identity linking remains out of the base milestone until its beta/status and takeover threat model are accepted.
+- The application never infers authorization from a provider email; backend RLS remains authoritative.
 
 ## Agent roles and loop prevention
 
-- Specifier freezes business intent, Gherkin, oracles, visual source, platform differences, and open human decisions.
-- Builder changes product code only after H1.
-- React Native debugger diagnoses native/build/device failures and does not weaken acceptance criteria.
-- `agent-device` operator records deterministic device evidence and does not judge product acceptance.
-- Independent verifier maps evidence to each scenario and reports `verified`, `partially-verified`, or `failed` without editing implementation.
-- Reviewer inspects architecture, security, native behavior, tests, and release impact without applying fixes.
+- Specifier freezes provider/platform matrix, Gherkin, oracles, account collision/deletion policy, visual source, and human-only setup.
+- Builder implements only after H1.
+- React Native debugger classifies provider, callback, native capability, build, device, backend, or product failures before a fix.
+- `agent-device` operator collects native evidence but does not judge acceptance.
+- Independent verifier maps UI, backend, OS, storage, provider, and manual evidence to each scenario without editing code.
+- Reviewer inspects auth threats, identity linking, secrets, RLS, lifecycle, platform configuration, tests, and release impact.
 - Release operator handles exact artifacts only after H2/H3.
-- Behavior auditor detects loops, false success, scope drift, baseline manipulation, and role violations.
+- Behavior auditor detects loops, false provider success, scope drift, test weakening, credential access, and baseline manipulation.
 
-The orchestrator owns budgets and transitions, not truth. Two occurrences of the same stable failure signature open the circuit breaker. A debugger may propose a diagnosed fix; a builder applies it in a new bounded iteration; the independent verifier reruns the original oracle. No role gets to both change the criterion and declare it passed.
+Two occurrences of the same stable failure signature open the circuit breaker. A provider outage does not authorize mocking the provider and relabeling the result as E2E. A failed real-provider canary remains `requires-human`, `partially-verified`, or `failed` according to evidence.
 
-## Minimum observability for Phase 1
+## Decisions required before Phase 1 H1
 
-Keep structured local events as the required source:
-
-- run, workflow, state, revision, risk, actor/role, action, timestamps;
-- artifact digests, commit/build IDs, environment and device fingerprints;
-- tool, attempt, duration, token/cost class where available;
-- failure category and stable signature;
-- scenario result, oracle result, evidence references, and redaction status;
-- gate request/provenance without secret values;
-- circuit-breaker and budget state.
-
-Monitor invariants continuously and run the behavior audit after implementation, verification, review, and release preparation. Add OpenTelemetry in Phase 2 when remote/concurrent runs make cross-machine aggregation worth operating.
-
-## Decisions needed before revising Phase 1 H1
-
-1. **Product security boundary:** accept P0 note storage + P1 session storage for 1A, or redesign Phase 1 around P2/P3 before code exists.
-2. **App identity:** product name, slug, iOS bundle ID, Android application ID, URL scheme, and owner accounts.
-3. **Repository layout:** accept `apps/reference-mobile` with one workspace lockfile.
-4. **Backend topology:** local PR stack plus isolated hosted E2E, or one explicitly accepted alternative.
-5. **Design source:** committed reference for 1A or live Figma as an H1 dependency.
-6. **Device matrix:** exact primary iOS simulator, Android emulator, and available physical devices.
-7. **Release scope:** internal artifacts/dry-run H3 only, or actual TestFlight/Play Internal distribution.
-8. **Budget:** allowable EAS/macOS/device-farm cost and maximum attempts per platform.
+1. Confirm Supabase as the shipped default backend with an application-owned auth seam.
+2. Confirm email means password + verification + recovery; decide whether magic links are additionally required.
+3. Select the SMS provider, target countries, test numbers, rate/spend limits, and real-SMS canary policy.
+4. Decide whether Apple on Android is enabled by default or shipped off by default as proposed.
+5. Provide ownership metadata—not secrets—for Apple Developer, Google Cloud, Supabase, EAS, domains, privacy/support and provider test accounts.
+6. Select product naming/bundle-ID base and redirect/universal-link domain strategy.
+7. Approve the repository layout and one-workspace lockfile.
+8. Select primary simulators/emulators, physical devices, and native/provider-canary operator.
+9. Approve internal artifact versus TestFlight/Play Internal scope for Phase 1C.
+10. Set EAS, macOS, SMS, and device-farm budgets plus attempt limits.
 
 ## Phase 1 entry criteria
 
-Do not move the existing Phase 1 run beyond H1 until:
+- Phase 0 hardening has H2 evidence and the enforced human-approval path is active.
+- The existing private-notes Phase 1 digest is treated as obsolete and is never approved.
+- The auth-foundation pack is completed, digested as a new Phase 1 revision, and explicitly approved at H1.
+- Exact versions are researched from official sources and committed to the lockfile.
+- The pinned upstream integration decision is recorded before scaffolding.
+- `agent-device`, iOS, Android, Supabase, EAS, identifiers, redirects, fixtures, and credential metadata pass truthful preflight.
 
-- Phase 0 hardening has H2 evidence and the enforced approval path is active;
-- the pinned upstream template has a recorded integration decision rather than an assumed copy;
-- exact versions are researched from official sources and locked;
-- `agent-device` is installed, pinned, and its local CLI contract is captured during environment preflight;
-- iOS, Android, backend, signing, EAS, and fixture readiness are truthfully declared;
-- the eight decisions above are resolved in a revised digest-bound specification.
+## Phase 1 exit
 
-## What success unlocks
+The phase exits when email, phone, Google, Apple, session lifecycle, RLS, logout, recovery, deletion, security sinks, platform UX, and template regeneration meet the product acceptance criteria; deterministic scenarios pass repeatedly on both platforms; real-provider evidence is complete; and H1/H2/H3 operate without bypasses.
 
-Once 1A passes without bypasses, the same control plane can support bounded flows for creating an app, onboarding an existing app, implementing a feature, fixing a native bug, adding E2E, implementing a design, upgrading Expo, rotating encryption keys, and preparing a release. Until then, those are designed workflows, not yet proven capabilities.
+After that, a small private-notes feature is valuable as the first proof that a generated project can use the established `develop-feature` flow. It is no longer allowed to substitute for the boilerplate itself.
 
