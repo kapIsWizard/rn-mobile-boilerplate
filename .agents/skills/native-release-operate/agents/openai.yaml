@@ -1,0 +1,4 @@
+interface:
+  display_name: "Native Release Operator"
+  short_description: "Buduje i wydaje dokładnie zatwierdzony artefakt"
+  default_prompt: "Use $native-release-operate to build and distribute an artifact-bound native release candidate while preserving H2 and H3 human gates."

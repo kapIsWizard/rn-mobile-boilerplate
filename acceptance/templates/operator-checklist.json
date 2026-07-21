@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "runId": "replace-me",
+  "build": {
+    "id": "replace-me",
+    "artifactDigest": "replace-me",
+    "profile": "internal"
+  },
+  "steps": [
+    {
+      "id": "OP-NOTE-IOS-001",
+      "requirement": "REQ-NOTE-001",
+      "platform": "ios",
+      "device": "physical device model and OS",
+      "startingState": "installed exact internal build; synthetic owner signed in",
+      "action": "terminate, reopen, and open the previously created note",
+      "expected": "exactly one matching private note is visible",
+      "observed": null,
+      "status": "not-run",
+      "evidence": [],
+      "performedBy": "replace-me",
+      "performedAt": "1970-01-01T00:00:00.000Z"
+    }
+  ],
+  "result": "incomplete"
+}

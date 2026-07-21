@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "initialState": "DRAFT",
+  "terminalStates": ["COMPLETED", "BLOCKED"],
+  "transitions": {
+    "DRAFT": [{ "to": "SPEC_PENDING" }],
+    "SPEC_PENDING": [{ "to": "SPEC_APPROVED", "requiresApproval": "specification", "requiresDigest": "spec" }],
+    "SPEC_APPROVED": [{ "to": "PREFLIGHTING" }],
+    "PREFLIGHTING": [
+      { "to": "PLANNED", "requiresDigest": "environment", "requiresReadyEnvironment": true }
+    ],
+    "PLANNED": [{ "to": "IMPLEMENTING" }],
+    "IMPLEMENTING": [{ "to": "VERIFYING" }],
+    "VERIFYING": [
+      { "to": "DEBUGGING" },
+      { "to": "REVIEWING", "requiresDigest": "evidence" }
+    ],
+    "DEBUGGING": [{ "to": "IMPLEMENTING" }],
+    "REVIEWING": [
+      { "to": "IMPLEMENTING" },
+      { "to": "ACCEPTANCE_PENDING" }
+    ],
+    "ACCEPTANCE_PENDING": [
+      {
+        "to": "SPEC_PENDING",
+        "createsRevision": true,
+        "invalidateDigests": ["spec", "environment", "evidence", "releaseArtifact"],
+        "invalidateApprovals": ["specification", "acceptance", "release"]
+      },
+      { "to": "ACCEPTED", "requiresApproval": "acceptance" }
+    ],
+    "ACCEPTED": [{ "to": "RC_BUILDING" }],
+    "RC_BUILDING": [{ "to": "FINAL_QA_PENDING", "requiresDigest": "releaseArtifact" }],
+    "FINAL_QA_PENDING": [
+      {
+        "to": "DEBUGGING",
+        "createsRevision": true,
+        "invalidateDigests": ["evidence", "releaseArtifact"],
+        "invalidateApprovals": ["acceptance", "release"]
+      },
+      { "to": "RELEASE_APPROVED", "requiresApproval": "release" }
+    ],
+    "RELEASE_APPROVED": [{ "to": "RELEASING" }],
+    "RELEASING": [{ "to": "OBSERVING" }],
+    "OBSERVING": [{ "to": "COMPLETED" }]
+  }
+}

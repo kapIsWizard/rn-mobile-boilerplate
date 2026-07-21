@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/AIBiz-Automatyzacje/workspace-template-mobile",
+  "branch": "main",
+  "commit": "4088711b2e2ebd6d6128cfb76805076febfe94ca",
+  "inspectedAt": "2026-07-21",
+  "strategy": "pinned-upstream-plus-local-adapters",
+  "status": "inspected-not-yet-vendored",
+  "blockedPatterns": [
+    "mobile-e2e-maestro",
+    ".maestro/",
+    "Maestro CLI",
+    "Claude-only Workflow API"
+  ]
+}

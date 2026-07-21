@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Change Reviewer"
+  short_description: "Recenzuje zmiany RN bez naprawiania ich po cichu"
+  default_prompt: "Use $mobile-change-review to review this Expo or React Native change against the approved specification and native risk surfaces without implementing fixes."

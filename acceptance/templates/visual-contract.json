@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "screen": "private-note-populated",
+  "platform": "ios",
+  "figma": {
+    "fileKey": "replace-me",
+    "nodeId": "replace-me"
+  },
+  "environment": {
+    "device": "replace-me",
+    "locale": "pl-PL",
+    "appearance": "light",
+    "fontScale": 1,
+    "orientation": "portrait",
+    "fixture": "private-note-populated-v1"
+  },
+  "allowedDifferences": [
+    { "region": "status-bar", "strategy": "normalize" },
+    { "region": "generated-note-id", "strategy": "mask" }
+  ],
+  "requiredElements": ["screen-title", "note-title", "note-body", "primary-action"]
+}

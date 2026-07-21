@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "capabilities": {
+    "expo.docs": {
+      "interactive": "expo-mcp",
+      "fallback": "official-web",
+      "permission": "read"
+    },
+    "expo.builds": {
+      "interactive": "expo-mcp",
+      "ci": "eas-cli",
+      "permission": "gated-write"
+    },
+    "native.credentials.metadata": {
+      "interactive": "eas-cli-and-platform-portals",
+      "fallback": "operator-attested-manifest",
+      "permission": "read-metadata-no-secret-values"
+    },
+    "cryptography.keys.metadata": {
+      "interactive": "provider-kms-console-or-approved-mcp",
+      "fallback": "operator-attested-manifest",
+      "permission": "read-alias-version-policy-status-no-key-material"
+    },
+    "cryptography.operate": {
+      "interactive": "approved-backend-adapter",
+      "ci": "pinned-provider-sdk",
+      "permission": "gated-cryptographic-operations-no-raw-key-export"
+    },
+    "native.device": {
+      "interactive": "agent-device-mcp",
+      "ci": "agent-device-cli",
+      "permission": "test-environment-write"
+    },
+    "database.inspect": {
+      "interactive": "supabase-mcp",
+      "fallback": "supabase-cli",
+      "permission": "project-scoped-read"
+    },
+    "database.change": {
+      "interactive": "migration-files",
+      "ci": "supabase-cli",
+      "permission": "gated-write"
+    },
+    "design.read": {
+      "interactive": "figma-mcp",
+      "permission": "read"
+    },
+    "code.review": {
+      "interactive": "github-plugin-or-optional-external-reviewer",
+      "fallback": "independent-local-review",
+      "permission": "read-and-comment-no-acceptance-authority"
+    },
+    "observability.read": {
+      "interactive": "sentry-mcp",
+      "fallback": "sentry-cli",
+      "permission": "project-scoped-read"
+    },
+    "analytics.read": {
+      "interactive": "project-scoped-product-analytics",
+      "fallback": "exported-redacted-events",
+      "permission": "read-no-customer-identifiers-by-default"
+    },
+    "scm": {
+      "interactive": "github-plugin",
+      "ci": "gh",
+      "permission": "repository-scoped"
+    }
+  }
+}

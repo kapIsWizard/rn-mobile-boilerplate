@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentic Orchestrator"
+  short_description: "Steruje workflow, bramkami i limitami pętli"
+  default_prompt: "Use $agentic-orchestrate to classify this task, create or resume its run state, and route it through verification and human gates."

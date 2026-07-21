@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Documentation Researcher"
+  short_description: "Weryfikuje wersje i oficjalne źródła mobilne"
+  default_prompt: "Use $mobile-docs-research to resolve this version-sensitive mobile question from installed context and official documentation, then record its freshness and applicability."

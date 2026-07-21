@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Data Protection"
+  short_description: "Projektuje ochronę danych i cykl życia kluczy"
+  default_prompt: "Use $mobile-data-protection to define an auditable data-protection and key-lifecycle contract for this mobile change."

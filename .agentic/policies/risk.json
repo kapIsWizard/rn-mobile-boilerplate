@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "dimensions": [
+    "businessImpact",
+    "securityAndData",
+    "nativeSurface",
+    "changeRadius",
+    "reversibility",
+    "visualCriticality"
+  ],
+  "profiles": {
+    "fast": {
+      "score": { "min": 0, "max": 3 },
+      "requiredVerification": ["static", "targeted-tests"]
+    },
+    "standard": {
+      "score": { "min": 4, "max": 7 },
+      "requiredVerification": ["static", "unit", "integration", "targeted-device"]
+    },
+    "critical": {
+      "score": { "min": 8, "max": 12 },
+      "requiredVerification": ["static", "unit", "integration", "native-build", "ios-device", "android-device", "release-candidate"]
+    }
+  },
+  "forceCritical": [
+    "authentication",
+    "payments",
+    "sensitive-data",
+    "application-cryptography",
+    "field-encryption",
+    "end-to-end-encryption",
+    "key-management",
+    "key-rotation",
+    "key-recovery",
+    "encrypted-backup",
+    "database-migration",
+    "push-notifications",
+    "background-task",
+    "biometrics",
+    "camera",
+    "location",
+    "native-dependency",
+    "ota-runtime",
+    "store-configuration"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "fix-bug",
+  "humanGates": ["specification", "acceptance", "release"],
+  "stages": ["intake", "impact-and-risk", "preserve-reproduction", "data-protection-impact", "specification", "human-specification", "environment-preflight", "failure-classification", "root-cause-diagnosis", "minimal-fix", "original-reproduction", "data-protection-regression", "regression-matrix", "independent-review", "human-acceptance", "release-candidate", "final-qa", "release", "observe"]
+}

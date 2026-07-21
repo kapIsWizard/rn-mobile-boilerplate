@@ -1,0 +1,4 @@
+interface:
+  display_name: "Expo React Native Builder"
+  short_description: "Implementuje zatwierdzony zakres natywnej aplikacji"
+  default_prompt: "Use $expo-react-native-build to implement only the currently approved Expo or React Native specification and prepare it for independent verification."

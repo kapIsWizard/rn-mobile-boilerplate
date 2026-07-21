@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed",
+  "scope": "Phase 1 private notes critical vertical spike",
+  "dataInventory": [
+    {
+      "id": "note-content",
+      "classification": "confidential",
+      "fields": ["notes.title", "notes.body"],
+      "plaintextLocations": ["active React Native form/view memory", "authorized Supabase API response", "authorized Postgres row"],
+      "retention": "until the synthetic fixture is reset; no production or customer data",
+      "backup": "isolated E2E backend backup policy only; no device cache or application backup",
+      "search": "not supported"
+    },
+    {
+      "id": "authentication-session",
+      "classification": "credential",
+      "fields": ["access token", "refresh token"],
+      "plaintextLocations": ["Supabase client runtime memory", "platform-protected local key-value storage"],
+      "retention": "session lifetime and provider refresh policy",
+      "backup": "must follow platform secure-storage rules and never be copied into application backup or evidence",
+      "search": "not applicable"
+    },
+    {
+      "id": "note-routing-metadata",
+      "classification": "internal",
+      "fields": ["notes.id", "notes.owner_id", "notes.created_at", "notes.updated_at", "notes.idempotency_key"],
+      "plaintextLocations": ["authorized mobile runtime", "Supabase API", "Postgres"],
+      "retention": "until fixture reset",
+      "backup": "isolated E2E backend policy",
+      "search": "ID and owner lookups required"
+    }
+  ],
+  "threatModel": {
+    "protectAgainst": [
+      "another authenticated application user",
+      "accidental plaintext leakage through app logs, crash reports, analytics, screenshots, recordings, clipboard, AsyncStorage, caches, files, or committed evidence",
+      "lost device storage access within the guarantees of iOS Keychain and Android Keystore-backed storage",
+      "stolen backend media or backup within the hosted provider encryption boundary"
+    ],
+    "trustedPlaintextProcessors": [
+      "the authorized installed mobile application while rendering or editing a note",
+      "Supabase Auth/API/Postgres processes and explicitly authorized project operators"
+    ],
+    "explicitlyNotProtectedAgainst": [
+      "a compromised or malicious privileged Supabase/backend operator",
+      "a fully compromised unlocked device or hostile code running in the application process",
+      "legal or provider access inside the trusted hosted-service boundary"
+    ]
+  },
+  "decision": {
+    "profile": "P4-hybrid",
+    "rationale": "Use P0 for note content in the isolated spike and P1 for authentication credentials. This proves authorization, native lifecycle, plaintext-sink discipline, and platform secure storage without introducing an unvalidated backend encryption service or E2EE recovery product into the first vertical slice.",
+    "rejectedAlternatives": [
+      "P2 server envelope encryption is deferred because it would replace direct client-to-Supabase protected-field writes with a trusted encryption service and KMS, materially expanding Phase 1 infrastructure.",
+      "P3 client E2EE is deferred because multi-device recovery, lost-device behavior, sharing, search, support, and key ownership are unresolved product decisions.",
+      "Supabase Vault is not used for note fields because its decrypted view remains plaintext-accessible to authorized database roles and does not provide E2EE."
+    ],
+    "requiresHumanConfirmation": true
+  },
+  "controls": {
+    "transport": "TLS required for every mobile-to-Supabase request; no plaintext endpoints",
+    "authorization": "RLS owner equality and cross-user denial remain mandatory independently of encryption",
+    "localStorage": "session credentials only in the version-matched platform-protected store; note title/body never persisted in AsyncStorage, SQLite, files, query persistence, or offline queues",
+    "remoteStorage": "note content remains plaintext to authorized Supabase processing and encrypted only by provider-managed at-rest controls",
+    "logsAndTelemetry": "note title/body, tokens, email fixtures, and authorization headers are redacted from app, Metro, native, backend, crash, analytics, CI, and agent evidence",
+    "backup": "no note content in app backup; platform-protected credential entries follow verified iOS/Android semantics; E2E backend retention is temporary and fixture-owned",
+    "clipboardAndScreenshots": "the feature provides no copy action; test screenshots use synthetic known content and are retained only as redacted run evidence"
+  },
+  "cryptography": {
+    "mode": "platform-managed",
+    "algorithm": null,
+    "library": "version-matched Expo SecureStore adapter for session persistence plus hosted platform controls; exact version selected after H1 from installed Expo SDK",
+    "formatVersion": null,
+    "nonceStrategy": null,
+    "aadSchema": null
+  },
+  "keyLifecycle": {
+    "classes": [
+      {
+        "class": "device-wrapping",
+        "owner": "iOS or Android platform security subsystem",
+        "location": "system-managed protection used by the version-matched SecureStore adapter",
+        "exportable": false,
+        "versioned": false
+      },
+      {
+        "class": "provider-managed",
+        "owner": "approved isolated Supabase project operator/provider",
+        "location": "hosted provider storage boundary; metadata only visible to agents",
+        "exportable": false,
+        "versioned": true
+      }
+    ],
+    "generation": "delegated to Supabase Auth, iOS/Android platform storage, and hosted storage controls",
+    "storage": "no application-owned DEK or KEK; agents record metadata only",
+    "rotation": "session rotation follows Auth; provider-managed at-rest key rotation is outside the spike and must not be inferred",
+    "revocation": "logout/revoked session deletes local credentials and denies API access",
+    "recovery": "a missing or invalidated local session requires re-authentication; note data remains server-recoverable because Phase 1 is not E2EE",
+    "deletion": "fixture reset deletes notes; logout removes session material; no cryptographic erasure claim"
+  },
+  "platformBehavior": {
+    "ios": "verify Keychain-backed session persistence, accessibility choice, logout deletion, and observed reinstall behavior on the selected release-like build",
+    "android": "verify Keystore-backed session persistence, logout deletion, and SecureStore exclusion from Android Auto Backup",
+    "reinstall": "the app must tolerate missing credentials and require login; it must not promise identical iOS and Android persistence semantics",
+    "biometricChange": "biometric-gated access is not required in Phase 1; if added, return to H1 and test invalidation on a physical device"
+  },
+  "requiredEvidence": [
+    "dependency/config review proving a version-matched secure-storage adapter and Android backup exclusion",
+    "static scan proving no server keys, raw cryptographic keys, credentials, note content, or authorization headers in bundle/config/log fixtures",
+    "unit/integration evidence for session adapter failure, logout deletion, RLS denial, and TLS-only endpoints",
+    "known-marker scan of AsyncStorage, SQLite, application files, logs, crash/analytics payloads, screenshots metadata, and committed evidence",
+    "native iOS and Android replay for restart, logout/re-authentication, offline error, and absence of unintended note persistence",
+    "backend oracle proving cross-user denial and documenting that authorized Postgres storage contains plaintext note content under the accepted P0 boundary",
+    "operator review of residual privileged plaintext access at H1 and H2"
+  ],
+  "residualRisks": [
+    "authorized Supabase/backend processes and privileged operators can read note content",
+    "a fully compromised unlocked device or app process can observe rendered plaintext and session use",
+    "simulator/emulator evidence cannot prove physical-device biometric or hardware-backed key properties",
+    "provider-managed storage encryption and rotation are attested platform controls rather than application-layer evidence"
+  ],
+  "keyBoundary": {
+    "valuesRecorded": false,
+    "productionKeyAccess": false,
+    "metadataOnly": true
+  },
+  "blockers": []
+}

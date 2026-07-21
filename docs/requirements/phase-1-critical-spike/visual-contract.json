@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "reference": "design-reference.svg",
+  "screens": [
+    { "platform": "ios", "state": "default", "referenceRegion": "ios-default" },
+    { "platform": "ios", "state": "loading", "referenceRegion": "ios-loading" },
+    { "platform": "ios", "state": "error", "referenceRegion": "ios-error" },
+    { "platform": "ios", "state": "populated", "referenceRegion": "ios-populated" },
+    { "platform": "android", "state": "default", "referenceRegion": "android-default" },
+    { "platform": "android", "state": "loading", "referenceRegion": "android-loading" },
+    { "platform": "android", "state": "error", "referenceRegion": "android-error" },
+    { "platform": "android", "state": "populated", "referenceRegion": "android-populated" }
+  ],
+  "environment": {
+    "locale": "pl-PL",
+    "appearance": "light",
+    "fontScale": 1,
+    "orientation": "portrait",
+    "reduceMotion": true,
+    "fixtures": {
+      "default": "notes-empty-v1",
+      "loading": "notes-loading-v1",
+      "error": "notes-error-v1",
+      "populated": "notes-populated-v1"
+    }
+  },
+  "tokens": {
+    "canvas": "#F4F6FA",
+    "surface": "#FFFFFF",
+    "text": "#14213D",
+    "muted": "#64748B",
+    "primary": "#2F6FED",
+    "danger": "#B42318",
+    "radius": { "ios": 18, "android": 12 },
+    "spacing": [4, 8, 12, 16, 24, 32]
+  },
+  "requiredElements": {
+    "default": ["screen-title", "empty-title", "empty-body", "create-note-action"],
+    "loading": ["screen-title", "loading-indicator", "loading-label"],
+    "error": ["screen-title", "non-technical-error", "retry-action"],
+    "populated": ["screen-title", "note-title", "note-preview", "create-note-action"]
+  },
+  "allowedDifferences": [
+    { "region": "status-bar", "strategy": "normalize" },
+    { "region": "home-indicator-or-navigation-bar", "strategy": "normalize" },
+    { "region": "system-font-glyph-rasterization", "strategy": "per-platform-threshold" },
+    { "region": "generated-note-identifier", "strategy": "mask" }
+  ],
+  "thresholds": {
+    "semantic": "all-required-elements",
+    "regionalPixelDifferencePercent": 1.5,
+    "structuralSimilarityMinimum": 0.985,
+    "humanReviewRequiredForChangedRegions": true
+  },
+  "baselinePolicy": {
+    "automaticUpdate": false,
+    "requiresHumanApproval": true,
+    "implementationScreenshotCannotBecomeReference": true
+  }
+}

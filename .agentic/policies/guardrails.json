@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "failureClasses": [
+    "PRODUCT_FAILURE",
+    "TEST_FAILURE",
+    "FIXTURE_FAILURE",
+    "BUILD_FAILURE",
+    "ENVIRONMENT_FAILURE",
+    "DEVICE_FAILURE",
+    "EXTERNAL_SERVICE_FAILURE",
+    "UNKNOWN"
+  ],
+  "roleSeparation": {
+    "specification-author": ["prepare-specification"],
+    "builder": ["implement"],
+    "debugger": ["diagnose"],
+    "device-operator": ["operate-device", "collect-evidence"],
+    "verifier": ["verify", "classify-failure"],
+    "reviewer": ["review"],
+    "documentation-researcher": ["research-official-sources"],
+    "data-protection-architect": ["classify-data", "design-data-protection-contract", "review-key-metadata"],
+    "release-operator": ["build-release-candidate", "distribute", "observe"],
+    "human": ["approve-specification", "approve-acceptance", "approve-release"]
+  },
+  "forbiddenSignals": [
+    "test-weakened-after-failure",
+    "assertion-removed",
+    "test-skipped-without-owner",
+    "quality-threshold-lowered",
+    "visual-baseline-updated-without-approval",
+    "success-without-evidence",
+    "success-with-nonzero-exit",
+    "production-tool-used-outside-release-gate",
+    "repeated-failure-without-new-evidence",
+    "unplanned-scope-expansion",
+    "hardcoded-encryption-key",
+    "raw-key-material-recorded",
+    "key-and-ciphertext-share-effective-trust-boundary",
+    "nonce-reused-with-key",
+    "unauthenticated-encryption",
+    "custom-cryptographic-primitive",
+    "sensitive-plaintext-in-log-cache-backup-or-evidence",
+    "key-recovery-without-human-decision",
+    "biometric-treated-as-key-or-recovery",
+    "authorization-replaced-by-encryption",
+    "provider-at-rest-encryption-claimed-as-e2ee"
+  ]
+}

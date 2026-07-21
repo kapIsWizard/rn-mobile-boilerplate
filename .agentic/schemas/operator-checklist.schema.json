@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/operator-checklist.schema.json",
+  "title": "Human operator verification checklist",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "build", "steps", "result"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "build": {
+      "type": "object",
+      "required": ["id", "artifactDigest", "profile"],
+      "properties": {
+        "id": { "type": "string" },
+        "artifactDigest": { "type": "string" },
+        "profile": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "requirement", "platform", "device", "startingState", "action", "expected", "status", "evidence", "performedBy", "performedAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "requirement": { "type": "string" },
+          "platform": { "enum": ["ios", "android"] },
+          "device": { "type": "string" },
+          "startingState": { "type": "string" },
+          "action": { "type": "string" },
+          "expected": { "type": "string" },
+          "observed": { "type": ["string", "null"] },
+          "status": { "enum": ["passed", "failed", "blocked", "not-run"] },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "performedBy": { "type": "string" },
+          "performedAt": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "result": { "enum": ["passed", "failed", "blocked", "incomplete"] }
+  },
+  "additionalProperties": false
+}

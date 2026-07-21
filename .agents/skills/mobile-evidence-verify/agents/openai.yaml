@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Evidence Verifier"
+  short_description: "Niezależnie ocenia kompletność dowodów i scenariuszy"
+  default_prompt: "Use $mobile-evidence-verify to independently judge this implementation against approved scenarios and all required native, backend, visual, and security oracles."

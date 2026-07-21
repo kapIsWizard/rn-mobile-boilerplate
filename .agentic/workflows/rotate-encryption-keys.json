@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "rotate-encryption-keys",
+  "humanGates": ["specification", "acceptance", "release"],
+  "stages": ["incident-or-cryptoperiod-intake", "critical-risk", "ciphertext-and-key-version-inventory", "rotation-contract", "recovery-and-rollback-plan", "human-specification", "non-production-key-metadata-preflight", "migration-canary", "rewrap-or-reencrypt", "interruption-and-resume-test", "old-version-read-test", "plaintext-and-key-exposure-scan", "independent-review", "human-acceptance", "release-candidate", "final-qa", "human-release-approval", "staged-rotation", "observe", "retire-old-key", "compound"]
+}

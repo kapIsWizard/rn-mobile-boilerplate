@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/scenario-manifest.schema.json",
+  "title": "Business scenario execution manifest",
+  "type": "object",
+  "required": ["schemaVersion", "id", "requirement", "gherkin", "risk", "execution", "verification", "platforms"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^SCN-[A-Z0-9-]+$" },
+    "requirement": { "type": "string", "pattern": "^REQ-[A-Z0-9-]+$" },
+    "gherkin": { "type": "string" },
+    "risk": { "enum": ["fast", "standard", "critical"] },
+    "execution": {
+      "type": "object",
+      "required": ["replay", "fixture", "reset"],
+      "properties": {
+        "replay": { "type": "string", "pattern": "\\.ad$" },
+        "fixture": { "type": "string" },
+        "reset": { "type": "string" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["ui"],
+      "properties": {
+        "ui": { "type": "array", "items": { "type": "string" } },
+        "contract": { "type": "array", "items": { "type": "string" } },
+        "forbidden": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "platforms": {
+      "type": "object",
+      "required": ["pullRequest", "release"],
+      "properties": {
+        "pullRequest": { "$ref": "#/$defs/platforms" },
+        "release": { "$ref": "#/$defs/platforms" }
+      }
+    },
+    "visual": { "type": ["object", "null"] }
+  },
+  "$defs": {
+    "platforms": {
+      "type": "array",
+      "items": { "enum": ["ios", "android"] },
+      "uniqueItems": true
+    }
+  }
+}

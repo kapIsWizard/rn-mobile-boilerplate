@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Device Verifier"
+  short_description: "Weryfikuje natywne flow i zbiera dowody"
+  default_prompt: "Use $agent-device-verify to run native iOS or Android verification with agent-device and produce an auditable evidence bundle."

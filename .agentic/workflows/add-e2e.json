@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "add-e2e",
+  "humanGates": ["specification", "acceptance"],
+  "stages": ["business-scenario", "oracle-map", "data-protection-oracle-map", "fixture-and-reset", "device-preflight", "explore", "record-agent-device-replay", "stabilize-semantic-selectors", "negative-and-recovery-paths", "repeatability", "platform-matrix", "backend-crypto-and-visual-evidence", "operator-gap", "acceptance"]
+}

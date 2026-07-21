@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/run-state.schema.json",
+  "title": "Agentic run state",
+  "type": "object",
+  "required": ["schemaVersion", "id", "name", "workflow", "risk", "state", "revision", "digests", "digestSources", "approvals", "attempts", "failures", "circuitBreaker"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "workflow": { "type": "string", "minLength": 1 },
+    "risk": { "enum": ["fast", "standard", "critical"] },
+    "state": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "digests": {
+      "type": "object",
+      "required": ["spec", "environment", "evidence", "releaseArtifact"],
+      "properties": {
+        "spec": { "type": ["string", "null"] },
+        "environment": { "type": ["string", "null"] },
+        "evidence": { "type": ["string", "null"] },
+        "releaseArtifact": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "digestSources": {
+      "type": "object",
+      "required": ["spec", "environment", "evidence", "releaseArtifact"],
+      "properties": {
+        "spec": { "type": ["string", "null"] },
+        "environment": { "type": ["string", "null"] },
+        "evidence": { "type": ["string", "null"] },
+        "releaseArtifact": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "approvals": { "type": "object" },
+    "attempts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "failures": { "type": "array" },
+    "circuitBreaker": {
+      "type": "object",
+      "required": ["open", "reason"],
+      "properties": {
+        "open": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

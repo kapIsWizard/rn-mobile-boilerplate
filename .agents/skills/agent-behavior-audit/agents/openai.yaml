@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Behavior Auditor"
+  short_description: "Wykrywa pętle, scope drift i fałszywe sukcesy"
+  default_prompt: "Use $agent-behavior-audit to audit this run for loops, invalid evidence, scope drift, test weakening, and guardrail violations."

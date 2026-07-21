@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "environments": {
+    "development": {
+      "dataClass": "synthetic-or-development",
+      "distribution": "development-client",
+      "productionAccess": false
+    },
+    "e2e": {
+      "dataClass": "synthetic-only",
+      "distribution": "simulator-or-internal",
+      "productionAccess": false,
+      "requiresIsolatedBackend": true
+    },
+    "preview": {
+      "dataClass": "synthetic-or-staging",
+      "distribution": "testflight-or-play-internal",
+      "productionAccess": false
+    },
+    "production": {
+      "dataClass": "production",
+      "distribution": "stores",
+      "productionAccess": true,
+      "requiresHumanGate": "release"
+    }
+  }
+}

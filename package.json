@@ -1,0 +1,18 @@
+{
+  "name": "mobilka-agentic-workflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "agentic": "node scripts/agentic/cli.mjs",
+    "agentic:audit": "node scripts/agentic/cli.mjs audit",
+    "agentic:monitor": "node scripts/agentic/cli.mjs monitor",
+    "agentic:test": "node --test scripts/agentic/*.test.mjs",
+    "agentic:validate": "node scripts/agentic/validate.mjs",
+    "agentic:check": "npm run agentic:validate && npm run agentic:test",
+    "test": "npm run agentic:test"
+  }
+}

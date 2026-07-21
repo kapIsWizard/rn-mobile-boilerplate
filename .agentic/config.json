@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "defaultRisk": "standard",
+  "runRoot": ".agentic/runs",
+  "telemetryRoot": ".agentic/telemetry",
+  "skillsRoot": ".agents/skills",
+  "maxRepeatedFailureSignature": 2,
+  "monitoring": {
+    "maxSilentMinutes": 30,
+    "maxActiveRunsPerObjective": 1
+  },
+  "iterationLimits": {
+    "implementation": 3,
+    "review": 2,
+    "visual": 2,
+    "environment": 2,
+    "securityArchitecture": 2,
+    "debug": 3,
+    "releaseCandidate": 2
+  },
+  "humanGates": [
+    "specification",
+    "acceptance",
+    "release"
+  ]
+}

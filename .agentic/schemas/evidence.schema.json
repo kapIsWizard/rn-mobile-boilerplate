@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/evidence.schema.json",
+  "title": "Feature evidence bundle",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "scenarioCoverage", "checks", "artifacts", "result"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "scenarioCoverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scenarioId", "status"],
+        "properties": {
+          "scenarioId": { "type": "string" },
+          "status": { "enum": ["passed", "failed", "skipped", "manual"] },
+          "reason": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "properties": {
+        "static": { "$ref": "#/$defs/check" },
+        "unit": { "$ref": "#/$defs/check" },
+        "integration": { "$ref": "#/$defs/check" },
+        "nativeBuild": { "$ref": "#/$defs/check" },
+        "iosDevice": { "$ref": "#/$defs/check" },
+        "androidDevice": { "$ref": "#/$defs/check" },
+        "visual": { "$ref": "#/$defs/check" },
+        "backend": { "$ref": "#/$defs/check" },
+        "dataProtection": { "$ref": "#/$defs/check" },
+        "accessibility": { "$ref": "#/$defs/check" },
+        "operator": { "$ref": "#/$defs/check" }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": { "type": "array", "items": { "type": "string" } },
+    "result": { "enum": ["verified", "partially-verified", "not-verified", "blocked-by-environment", "requires-human"] }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "skipped", "not-required"] },
+        "evidence": { "type": "array", "items": { "type": "string" } },
+        "reason": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

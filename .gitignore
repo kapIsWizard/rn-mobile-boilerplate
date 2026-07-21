@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Run state and device evidence can contain credentials or personal data.
+.agentic/runs/*
+!.agentic/runs/.gitkeep
+.agentic/telemetry/*.jsonl
+e2e/agent-device/artifacts/
+
+coverage/
+dist/
+*.log

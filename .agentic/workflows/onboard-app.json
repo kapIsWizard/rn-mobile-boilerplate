@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "onboard-app",
+  "humanGates": ["specification", "acceptance"],
+  "stages": ["inventory", "risk", "characterization", "secret-and-production-boundary", "plaintext-and-crypto-inventory", "key-lifecycle-and-recovery-audit", "environment-recovery", "native-build", "agent-device-canary", "cross-platform-characterization", "observability-canary", "gap-report", "migration-plan", "acceptance"]
+}

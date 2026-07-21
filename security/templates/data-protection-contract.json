@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked",
+  "scope": "replace-me",
+  "dataInventory": [],
+  "threatModel": {
+    "protectAgainst": [],
+    "trustedPlaintextProcessors": [],
+    "explicitlyNotProtectedAgainst": []
+  },
+  "decision": {
+    "profile": null,
+    "rationale": "not selected",
+    "rejectedAlternatives": [],
+    "requiresHumanConfirmation": true
+  },
+  "controls": {
+    "transport": "tls-required",
+    "authorization": "required-separately",
+    "localStorage": "not-defined",
+    "remoteStorage": "not-defined",
+    "logsAndTelemetry": "redact-sensitive-data",
+    "backup": "not-defined",
+    "clipboardAndScreenshots": "not-defined"
+  },
+  "cryptography": {
+    "mode": "not-selected",
+    "algorithm": null,
+    "library": null,
+    "formatVersion": null,
+    "nonceStrategy": null,
+    "aadSchema": null
+  },
+  "keyLifecycle": {
+    "classes": [],
+    "generation": "not-defined",
+    "storage": "not-defined",
+    "rotation": "not-defined",
+    "revocation": "not-defined",
+    "recovery": "not-defined",
+    "deletion": "not-defined"
+  },
+  "platformBehavior": {
+    "ios": "not-defined",
+    "android": "not-defined",
+    "reinstall": "not-defined",
+    "biometricChange": "not-defined"
+  },
+  "requiredEvidence": [],
+  "residualRisks": [],
+  "keyBoundary": {
+    "valuesRecorded": false,
+    "productionKeyAccess": false,
+    "metadataOnly": true
+  },
+  "blockers": ["classify data, select a profile, and resolve H1 decisions"]
+}

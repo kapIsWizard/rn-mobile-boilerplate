@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/environment-readiness.schema.json",
+  "title": "Native environment readiness manifest",
+  "type": "object",
+  "required": ["schemaVersion", "status", "generatedAt", "requiredChecks", "checks", "identifiers", "secretBoundary", "keyBoundary", "blockers"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "status": { "enum": ["ready", "blocked"] },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "requiredChecks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "evidence"],
+        "properties": {
+          "status": { "enum": ["ready", "blocked", "not-required"] },
+          "version": { "type": ["string", "null"] },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "identifiers": {
+      "type": "object",
+      "required": ["iosBundleId", "androidApplicationId", "environment"],
+      "properties": {
+        "iosBundleId": { "type": "string", "minLength": 1 },
+        "androidApplicationId": { "type": "string", "minLength": 1 },
+        "environment": { "enum": ["development", "e2e", "preview", "production"] }
+      },
+      "additionalProperties": false
+    },
+    "secretBoundary": {
+      "type": "object",
+      "required": ["valuesRecorded", "productionAccess", "inventory"],
+      "properties": {
+        "valuesRecorded": { "const": false },
+        "productionAccess": { "const": false },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "classification", "owner", "storage"],
+            "properties": {
+              "name": { "type": "string" },
+              "classification": { "enum": ["public-client-config", "sensitive-build-secret", "server-only-secret", "signing-credential"] },
+              "owner": { "type": "string" },
+              "storage": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "keyBoundary": {
+      "type": "object",
+      "required": ["valuesRecorded", "productionKeyAccess", "inventory"],
+      "properties": {
+        "valuesRecorded": { "const": false },
+        "productionKeyAccess": { "const": false },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "class", "owner", "location", "version", "exportable", "status"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "class": { "enum": ["DEK", "KEK", "device-wrapping", "recovery", "provider-managed", "session"] },
+              "owner": { "type": "string", "minLength": 1 },
+              "location": { "type": "string", "minLength": 1 },
+              "version": { "type": ["string", "number", "null"] },
+              "exportable": { "type": "boolean" },
+              "status": { "enum": ["active", "pending", "retiring", "revoked", "provider-managed"] }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blockers": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

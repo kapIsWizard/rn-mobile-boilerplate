@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "runId": "replace-me",
+  "scenarioCoverage": [
+    { "scenarioId": "SCN-NOTE-001", "status": "passed", "reason": null }
+  ],
+  "checks": {
+    "static": { "status": "passed", "evidence": ["artifacts/static.log"], "reason": null },
+    "unit": { "status": "passed", "evidence": ["artifacts/unit.log"], "reason": null },
+    "integration": { "status": "passed", "evidence": ["artifacts/integration.log"], "reason": null },
+    "nativeBuild": { "status": "passed", "evidence": ["artifacts/build.json"], "reason": null },
+    "iosDevice": { "status": "passed", "evidence": ["artifacts/ios/replay.json"], "reason": null },
+    "androidDevice": { "status": "passed", "evidence": ["artifacts/android/replay.json"], "reason": null },
+    "visual": { "status": "passed", "evidence": ["artifacts/visual/diff.png"], "reason": null },
+    "backend": { "status": "passed", "evidence": ["artifacts/backend.json"], "reason": null },
+    "dataProtection": { "status": "skipped", "evidence": [], "reason": "awaiting contract-specific static, integration, backend, and native oracles" },
+    "accessibility": { "status": "skipped", "evidence": [], "reason": "requires human physical-device pass" },
+    "operator": { "status": "skipped", "evidence": [], "reason": "awaiting build-bound operator checklist" }
+  },
+  "artifacts": ["artifacts/manifest.json"],
+  "result": "requires-human"
+}

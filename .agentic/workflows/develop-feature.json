@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "develop-feature",
+  "humanGates": ["specification", "acceptance", "release"],
+  "stages": ["intake", "risk", "data-protection-impact", "specification", "acceptance-contract", "design-input", "human-specification", "environment-delta-preflight", "plan", "implement", "lower-layer-tests", "data-protection-oracles", "agent-device-verify", "backend-and-visual-oracles", "independent-review", "operator-checklist", "human-acceptance", "release-candidate", "final-qa", "release", "observe", "compound"]
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "SCN-NOTE-001",
+  "requirement": "REQ-NOTE-001",
+  "gherkin": "acceptance/features/private-notes.feature",
+  "risk": "critical",
+  "execution": {
+    "replay": "e2e/agent-device/private-notes/create-and-restart.ad",
+    "fixture": "private-note-users-v1",
+    "reset": "clean-install-and-seed"
+  },
+  "verification": {
+    "ui": ["note-visible-after-restart"],
+    "contract": ["owner-can-read", "other-user-cannot-read", "one-note-created"],
+    "forbidden": ["duplicate-note", "secret-in-device-log"]
+  },
+  "platforms": {
+    "pullRequest": ["android"],
+    "release": ["ios", "android"]
+  },
+  "visual": {
+    "contract": "acceptance/visual-contracts/private-note-populated.json"
+  }
+}

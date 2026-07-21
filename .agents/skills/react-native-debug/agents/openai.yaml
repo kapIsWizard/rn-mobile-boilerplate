@@ -1,0 +1,4 @@
+interface:
+  display_name: "React Native Debugger"
+  short_description: "Diagnozuje awarie Expo i React Native"
+  default_prompt: "Use $react-native-debug to reproduce, classify, and diagnose this React Native failure before proposing a fix."

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-07-22",
+  "records": [
+    {
+      "question": "What is the baseline standard for mobile cryptography and key management?",
+      "installedVersion": null,
+      "applicableRange": "OWASP MASVS current pages checked 2026-07-22",
+      "conclusion": "Use current strong cryptography and manage keys across generation, storage, protection, rotation, recovery, and destruction. Storage, crypto, authorization, and network controls remain distinct.",
+      "sources": ["https://mas.owasp.org/MASVS/", "https://mas.owasp.org/MASVS/controls/MASVS-CRYPTO-1/", "https://mas.owasp.org/MASVS/controls/MASVS-CRYPTO-2/"],
+      "stability": "standards-current",
+      "contradiction": "None; this closes a previously missing lifecycle model.",
+      "confidence": "high",
+      "enforcement": "risk policy, data-protection contract, role separation, evidence and review"
+    },
+    {
+      "question": "How should application-layer stored data be encrypted?",
+      "installedVersion": null,
+      "applicableRange": "architecture guidance; exact library and platform support must be selected after H1",
+      "conclusion": "Prefer authenticated encryption. The default envelope pattern is AES-256-GCM with a unique nonce per key, versioned authenticated context, a random DEK, and a KEK held separately in KMS/HSM. Never invent an algorithm or store plaintext DEKs.",
+      "sources": ["https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html", "https://cheatsheetseries.owasp.org/cheatsheets/Key_Management_Cheat_Sheet.html", "https://csrc.nist.gov/pubs/sp/800/38/d/final", "https://docs.cloud.google.com/kms/docs/envelope-encryption"],
+      "stability": "architecture-stable-version-sensitive-implementation",
+      "contradiction": "NIST SP 800-38D is marked for revision, so implementation limits must be rechecked at build time.",
+      "confidence": "high",
+      "enforcement": "P2/P3 contract fields, force-critical risk, crypto evidence and review"
+    },
+    {
+      "question": "What does Expo SecureStore guarantee and where are the platform traps?",
+      "installedVersion": null,
+      "applicableRange": "Expo SDK 55 documentation checked 2026-07-22; exact SDK remains unselected before H1",
+      "conclusion": "SecureStore is for small encrypted key-value items. Android uses encrypted SharedPreferences backed by Android Keystore and must exclude entries from Auto Backup. iOS uses Keychain and values may outlive reinstall. Biometric changes can invalidate authenticated items, and real-device testing is required for biometric behavior.",
+      "sources": ["https://docs.expo.dev/versions/v55.0.0/sdk/securestore/", "https://developer.android.com/privacy-and-security/keystore", "https://developer.apple.com/documentation/security/keychain-services"],
+      "stability": "official-version-sensitive",
+      "contradiction": "SecureStore is not a bulk encrypted database and must not be treated as the sole source of irreplaceable data.",
+      "confidence": "high",
+      "enforcement": "P1 pattern, environment preflight, native lifecycle evidence and release review"
+    },
+    {
+      "question": "Does Supabase Vault provide E2EE for user fields?",
+      "installedVersion": null,
+      "applicableRange": "current Supabase Vault documentation checked 2026-07-22",
+      "conclusion": "No. Vault provides authenticated encryption for secrets stored in Postgres, but authorized roles can query a decrypted view. It is useful for database-side secrets, not proof that service operators cannot read user data.",
+      "sources": ["https://supabase.com/docs/guides/database/vault"],
+      "stability": "official-current",
+      "contradiction": "An encrypted database representation must not be reported as end-to-end encryption.",
+      "confidence": "high",
+      "enforcement": "guidebook trust-boundary rule and Phase 1 rejected alternative"
+    }
+  ]
+}

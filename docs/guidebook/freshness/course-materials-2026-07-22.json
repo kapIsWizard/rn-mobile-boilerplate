@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-07-22",
+  "records": [
+    {
+      "question": "Can Expo Go prove a production-grade native application?",
+      "installedVersion": null,
+      "applicableRange": "current Expo documentation as of 2026-07-22; recheck for the selected SDK",
+      "conclusion": "No. Use development builds for production-grade development and internal/release builds for acceptance-sensitive native behavior.",
+      "sources": ["https://docs.expo.dev/develop/development-builds/introduction/", "https://docs.expo.dev/review/overview/"],
+      "stability": "official-current",
+      "contradiction": "Course material occasionally treats a development/simulator visual pass as sufficient completion.",
+      "confidence": "high",
+      "enforcement": "machine policy and evidence matrix"
+    },
+    {
+      "question": "Where should an animated launch experience be verified?",
+      "installedVersion": null,
+      "applicableRange": "Expo SDK 52 and newer behavior documented in current latest docs",
+      "conclusion": "Verify the native splash on an internal or production build. Keep it visible only until content is ready; custom branding animation belongs in-app with reduced-motion handling.",
+      "sources": ["https://docs.expo.dev/versions/latest/sdk/splash-screen/", "https://docs.expo.dev/develop/user-interface/splash-screen-and-app-icon/"],
+      "stability": "official-version-sensitive",
+      "contradiction": "The course presents a fixed two-second generated video as the splash without separating native launch screen from in-app animation.",
+      "confidence": "high",
+      "enforcement": "design guidebook and release-build verification"
+    },
+    {
+      "question": "Which Supabase values may be bundled in an Expo mobile client?",
+      "installedVersion": null,
+      "applicableRange": "current Supabase publishable/secret key model; legacy anon/service_role keys deprecated by end of 2026",
+      "conclusion": "Bundle only project URL and publishable key. Secret/service-role keys and database passwords are backend-only and bypass RLS.",
+      "sources": ["https://supabase.com/docs/guides/getting-started/api-keys", "https://supabase.com/docs/guides/database/secure-data", "https://supabase.com/docs/guides/auth/quickstarts/react-native"],
+      "stability": "official-current-migration",
+      "contradiction": "The course puts service-role/DB credentials and a non-expiring management token in a project .env available to the agent.",
+      "confidence": "high",
+      "enforcement": "environment manifest secret boundary and audit"
+    },
+    {
+      "question": "Is an Android keystore the application identifier?",
+      "installedVersion": null,
+      "applicableRange": "Android app signing and OAuth identity model",
+      "conclusion": "No. The application ID/package name identifies software; the keystore holds signing material; certificate fingerprints identify the signing certificate to OAuth and platform services.",
+      "sources": ["https://docs.expo.dev/app-signing/app-credentials/", "https://developer.android.com/identity/authorization"],
+      "stability": "platform-stable",
+      "contradiction": "The course describes the keystore as the unique app identifier and SHA-1 as encryption.",
+      "confidence": "high",
+      "enforcement": "credential guidebook and preflight manifest"
+    },
+    {
+      "question": "How should EAS environment-variable visibility be selected?",
+      "installedVersion": null,
+      "applicableRange": "current EAS environments and visibility model",
+      "conclusion": "Classify each value as client-visible, sensitive build secret, server-only secret, or signing credential. Secret-visibility values are not available for client JS bundling; EXPO_PUBLIC values are public.",
+      "sources": ["https://docs.expo.dev/eas/environment-variables/manage/", "https://docs.expo.dev/eas/environment-variables/faq/"],
+      "stability": "official-current",
+      "contradiction": "The course treats one .env and interactive portal choices as a sufficient secret model.",
+      "confidence": "high",
+      "enforcement": "secret inventory and build-profile review"
+    },
+    {
+      "question": "What native verification contract does agent-device provide?",
+      "installedVersion": null,
+      "applicableRange": "official site checked 2026-07-22; pin and re-read installed CLI help before use",
+      "conclusion": "Use semantic snapshots, deterministic .ad replay, logs, recordings, screenshots, network evidence, and environment controls. The CLI is not currently installed in this workspace.",
+      "sources": ["https://agent-device.dev/"],
+      "stability": "emerging-version-sensitive",
+      "contradiction": "The course defers or skips native E2E and uses manual taps as final evidence.",
+      "confidence": "medium-high",
+      "enforcement": "pinned CLI preflight and agent-device-only E2E policy"
+    }
+  ]
+}

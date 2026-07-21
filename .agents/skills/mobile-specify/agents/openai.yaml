@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Specification Author"
+  short_description: "Tworzy specyfikację, Gherkin i kontrakty odbioru"
+  default_prompt: "Use $mobile-specify to turn this mobile request into a risk-classified H1 specification pack with Gherkin, oracles, design sources, and explicit scope."

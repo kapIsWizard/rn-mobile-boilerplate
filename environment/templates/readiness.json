@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "requiredChecks": [
+    "node",
+    "packageManager",
+    "expoTooling",
+    "iosToolchain",
+    "androidToolchain",
+    "agentDevice",
+    "e2eBackend",
+    "easProject",
+    "applicationIdentifiers",
+    "dataProtectionPlan"
+  ],
+  "checks": {
+    "node": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "packageManager": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "expoTooling": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "iosToolchain": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "androidToolchain": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "agentDevice": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "e2eBackend": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "easProject": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "applicationIdentifiers": { "status": "blocked", "version": null, "evidence": [], "reason": "not checked" },
+    "dataProtectionPlan": { "status": "blocked", "version": null, "evidence": [], "reason": "approved contract, platform storage behavior, dependency compatibility, backup policy, and key metadata not checked" }
+  },
+  "identifiers": {
+    "iosBundleId": "replace-me.e2e",
+    "androidApplicationId": "replace-me.e2e",
+    "environment": "e2e"
+  },
+  "secretBoundary": {
+    "valuesRecorded": false,
+    "productionAccess": false,
+    "inventory": []
+  },
+  "keyBoundary": {
+    "valuesRecorded": false,
+    "productionKeyAccess": false,
+    "inventory": []
+  },
+  "blockers": ["replace every placeholder and complete preflight"]
+}

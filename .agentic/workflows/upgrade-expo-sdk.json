@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "upgrade-expo-sdk",
+  "humanGates": ["specification", "acceptance", "release"],
+  "stages": ["installed-baseline", "official-release-research", "native-dependency-and-plugin-inventory", "secure-storage-and-crypto-compatibility", "risk", "specification", "human-specification", "toolchain-preflight", "upgrade", "prebuild-native-diff", "lower-layer-tests", "data-protection-regression", "release-mode-local-builds", "agent-device-regression", "independent-review", "human-acceptance", "release-candidate", "final-qa", "release", "observe"]
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/data-protection-contract.schema.json",
+  "title": "Mobile data protection contract",
+  "type": "object",
+  "required": ["schemaVersion", "status", "scope", "dataInventory", "threatModel", "decision", "controls", "cryptography", "keyLifecycle", "platformBehavior", "requiredEvidence", "residualRisks", "keyBoundary", "blockers"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "status": { "enum": ["blocked", "proposed"] },
+    "scope": { "type": "string", "minLength": 1 },
+    "dataInventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "classification", "fields", "plaintextLocations", "retention", "backup", "search"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "classification": { "enum": ["public", "internal", "confidential", "restricted", "credential"] },
+          "fields": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "plaintextLocations": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "retention": { "type": "string", "minLength": 1 },
+          "backup": { "type": "string", "minLength": 1 },
+          "search": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "threatModel": {
+      "type": "object",
+      "required": ["protectAgainst", "trustedPlaintextProcessors", "explicitlyNotProtectedAgainst"],
+      "properties": {
+        "protectAgainst": { "type": "array", "items": { "type": "string" } },
+        "trustedPlaintextProcessors": { "type": "array", "items": { "type": "string" } },
+        "explicitlyNotProtectedAgainst": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["profile", "rationale", "rejectedAlternatives", "requiresHumanConfirmation"],
+      "properties": {
+        "profile": { "type": ["string", "null"], "enum": [null, "P0-platform-baseline", "P1-local-secret-store", "P2-server-envelope", "P3-client-e2ee", "P4-hybrid"] },
+        "rationale": { "type": "string", "minLength": 1 },
+        "rejectedAlternatives": { "type": "array", "items": { "type": "string" } },
+        "requiresHumanConfirmation": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "controls": { "type": "object", "required": ["transport", "authorization", "localStorage", "remoteStorage", "logsAndTelemetry", "backup", "clipboardAndScreenshots"] },
+    "cryptography": {
+      "type": "object",
+      "required": ["mode", "algorithm", "library", "formatVersion", "nonceStrategy", "aadSchema"],
+      "properties": {
+        "mode": { "enum": ["not-selected", "platform-managed", "application-aead"] },
+        "algorithm": { "type": ["string", "null"] },
+        "library": { "type": ["string", "null"] },
+        "formatVersion": { "type": ["string", "null"] },
+        "nonceStrategy": { "type": ["string", "null"] },
+        "aadSchema": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "keyLifecycle": {
+      "type": "object",
+      "required": ["classes", "generation", "storage", "rotation", "revocation", "recovery", "deletion"],
+      "properties": {
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["class", "owner", "location", "exportable", "versioned"],
+            "properties": {
+              "class": { "enum": ["DEK", "KEK", "device-wrapping", "recovery", "provider-managed", "session"] },
+              "owner": { "type": "string" },
+              "location": { "type": "string" },
+              "exportable": { "type": "boolean" },
+              "versioned": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "generation": { "type": "string" },
+        "storage": { "type": "string" },
+        "rotation": { "type": "string" },
+        "revocation": { "type": "string" },
+        "recovery": { "type": "string" },
+        "deletion": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "platformBehavior": { "type": "object", "required": ["ios", "android", "reinstall", "biometricChange"] },
+    "requiredEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "residualRisks": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "keyBoundary": {
+      "type": "object",
+      "required": ["valuesRecorded", "productionKeyAccess", "metadataOnly"],
+      "properties": {
+        "valuesRecorded": { "const": false },
+        "productionKeyAccess": { "const": false },
+        "metadataOnly": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "blockers": { "type": "array", "items": { "type": "string" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "proposed" } } },
+      "then": {
+        "properties": {
+          "decision": { "properties": { "profile": { "type": "string" } } },
+          "dataInventory": { "minItems": 1 },
+          "blockers": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "decision": { "properties": { "profile": { "enum": ["P2-server-envelope", "P3-client-e2ee"] } } } } },
+      "then": {
+        "properties": {
+          "cryptography": {
+            "properties": {
+              "mode": { "const": "application-aead" },
+              "algorithm": { "type": "string", "minLength": 1 },
+              "library": { "type": "string", "minLength": 1 },
+              "formatVersion": { "type": "string", "minLength": 1 },
+              "nonceStrategy": { "type": "string", "minLength": 1 },
+              "aadSchema": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}
