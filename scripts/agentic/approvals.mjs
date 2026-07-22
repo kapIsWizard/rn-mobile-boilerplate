@@ -44,6 +44,11 @@ async function gitHead(root) {
   return stdout.trim();
 }
 
+async function assertCleanWorktree(root) {
+  const { stdout } = await execFileAsync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root });
+  if (stdout.trim()) throw new Error('Approval requires a clean worktree so every reviewed byte is bound to the commit SHA');
+}
+
 function githubHeaders(config, token) {
   return {
     Accept: 'application/vnd.github+json',
@@ -142,6 +147,7 @@ export async function requestGithubApproval(kernel, runDir, {
   const trustedProviders = await loadTrustedApprovalProviders(kernel, fetchImpl, token);
   const github = trustedProviders.github;
   const state = await readRun(runDir, kernel);
+  if (commitSha === null) await assertCleanWorktree(kernel.root);
   const currentCommit = commitSha || await gitHead(kernel.root);
   const request = createApprovalRequest(kernel, state, { gate, commitSha: currentCommit, now, ttlMinutes });
   const requestPath = path.join(path.resolve(runDir), 'approval-requests', `${gate}-${request.requestId}.json`);
@@ -234,6 +240,7 @@ export async function verifyGithubApproval(kernel, runDir, {
   const github = trustedProviders.github;
   const state = await readRun(runDir, kernel);
   const request = JSON.parse(await readFile(path.resolve(requestPath), 'utf8'));
+  if (currentCommitSha === null) await assertCleanWorktree(kernel.root);
   const currentCommit = currentCommitSha || await gitHead(kernel.root);
   assertCurrentRequest(kernel, state, request, currentCommit, now, github);
 
