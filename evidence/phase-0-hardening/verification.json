@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "runId": "2026-07-21T23-15-40-015Z-phase-0-hardening",
   "commitSha": "bbbfe6c23bb569720b7828deab173349b4fdf54c",
-  "generatedAt": "2026-07-22T01:46:08Z",
+  "generatedAt": "2026-07-22T01:48:51Z",
   "requirements": [
     {
       "id": "REQ-HARD-001",
@@ -24,9 +24,9 @@
     },
     {
       "id": "REQ-HARD-004",
-      "status": "partially-verified",
-      "evidence": ["package-lock.json", ".github/workflows/agentic-foundation.yml", "prior local npm ci passed"],
-      "reason": "The lockfile and npm ci workflow are unchanged; GitHub Actions has not run for commit bbbfe6c23bb569720b7828deab173349b4fdf54c."
+      "status": "verified",
+      "evidence": ["package-lock.json", ".github/workflows/agentic-foundation.yml", "GitHub Actions run 29884082497: success on commit 36d8199241114378e9d5c1406e92ccccdf05a87c"],
+      "reason": null
     },
     {
       "id": "REQ-HARD-005",
@@ -110,9 +110,9 @@
       "reason": null
     },
     "githubActionsRequiredCheck": {
-      "status": "requires-human",
-      "evidence": [".github/workflows/agentic-foundation.yml", "commit bbbfe6c23bb569720b7828deab173349b4fdf54c"],
-      "reason": "The candidate commit has not been pushed and checked by GitHub Actions yet."
+      "status": "passed",
+      "evidence": ["https://github.com/kapIsWizard/rn-mobile-boilerplate/actions/runs/29884082497", "Agentic foundation / verify: success"],
+      "reason": null
     },
     "githubProtectedEnvironmentCanary": {
       "status": "requires-human",
@@ -128,7 +128,6 @@
   "knownGaps": [
     "No dedicated GitHub App installation identity is configured in .agentic/approval-providers.json.",
     "Protected environments h1-specification, h2-acceptance, and h3-release have not been operator-verified.",
-    "Commit bbbfe6c23bb569720b7828deab173349b4fdf54c has not completed GitHub Actions.",
     "The external H2 request, human review, independent API verification, and one-time consumption have not been exercised live."
   ],
   "result": "requires-human"
