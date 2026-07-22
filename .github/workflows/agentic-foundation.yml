@@ -25,9 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Validate policies and skills
-        run: npm run agentic:validate
+      - name: Install exact reviewed dependency graph
+        run: npm ci
 
-      - name: Test workflow kernel
-        run: npm run agentic:test
+      - name: Validate contracts and test workflow kernel
+        run: npm run agentic:check

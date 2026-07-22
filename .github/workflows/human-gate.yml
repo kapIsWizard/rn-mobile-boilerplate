@@ -1,0 +1,100 @@
+name: Human gate
+run-name: human-gate:${{ inputs.gate }}:${{ inputs.request_id }}:${{ inputs.request_digest }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository_id:
+        description: Immutable GitHub repository ID
+        required: true
+        type: string
+      trust_policy_digest:
+        description: SHA-256 of the trusted approval policy
+        required: true
+        type: string
+      run_id:
+        description: Agentic run ID
+        required: true
+        type: string
+      gate:
+        description: Human gate
+        required: true
+        type: choice
+        options:
+          - specification
+          - acceptance
+          - release
+      revision:
+        description: Agentic run revision
+        required: true
+        type: string
+      digest_snapshot:
+        description: Canonical JSON digest snapshot
+        required: true
+        type: string
+      commit_sha:
+        description: Exact candidate commit SHA
+        required: true
+        type: string
+      request_id:
+        description: Unique approval request UUID
+        required: true
+        type: string
+      request_digest:
+        description: SHA-256 of the canonical request
+        required: true
+        type: string
+      expires_at:
+        description: Request expiry in ISO 8601
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: human-gate-${{ inputs.request_id }}
+  cancel-in-progress: false
+
+jobs:
+  specification:
+    if: inputs.gate == 'specification'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: h1-specification
+    steps:
+      - name: Seal approved request
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+          REQUEST_DIGEST: ${{ inputs.request_digest }}
+          TRUST_POLICY_DIGEST: ${{ inputs.trust_policy_digest }}
+        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST" && test -n "$TRUST_POLICY_DIGEST"
+
+  acceptance:
+    if: inputs.gate == 'acceptance'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: h2-acceptance
+    steps:
+      - name: Seal approved request
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+          REQUEST_DIGEST: ${{ inputs.request_digest }}
+          TRUST_POLICY_DIGEST: ${{ inputs.trust_policy_digest }}
+        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST" && test -n "$TRUST_POLICY_DIGEST"
+
+  release:
+    if: inputs.gate == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: h3-release
+    steps:
+      - name: Seal approved request
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+          REQUEST_DIGEST: ${{ inputs.request_digest }}
+          TRUST_POLICY_DIGEST: ${{ inputs.trust_policy_digest }}
+        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST" && test -n "$TRUST_POLICY_DIGEST"

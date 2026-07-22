@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-07-22",
+  "records": [
+    {
+      "question": "Can Supabase provide the four required auth identity types for the React Native reference adapter?",
+      "installedVersion": null,
+      "applicableRange": "Current Supabase Auth documentation checked 2026-07-22; exact package versions remain an H1/preflight decision",
+      "conclusion": "Supabase Auth supports email, phone, Google and Apple flows. Native social providers can exchange provider ID tokens for a Supabase session, while redirect-based flows require native deep-link configuration.",
+      "sources": [
+        "https://supabase.com/docs/guides/auth/quickstarts/react-native",
+        "https://supabase.com/docs/guides/auth/phone-login",
+        "https://supabase.com/docs/guides/auth/social-login/auth-google",
+        "https://supabase.com/docs/guides/auth/social-login/auth-apple",
+        "https://supabase.com/docs/guides/auth/native-mobile-deep-linking"
+      ],
+      "stability": "provider-and-version-sensitive",
+      "contradiction": "A successful OAuth UI does not by itself prove the expected backend session or identity, and a browser callback does not remove the need for native lifecycle testing.",
+      "confidence": "high",
+      "enforcement": "Phase 1 provider matrix, backend identity oracle, deep-link/lifecycle replay, exact version research"
+    },
+    {
+      "question": "How can phone OTP remain deterministic and safe in E2E?",
+      "installedVersion": null,
+      "applicableRange": "Current Supabase CLI config and phone login documentation checked 2026-07-22",
+      "conclusion": "Use auth.sms.test_otp mappings for isolated deterministic tests and keep real SMS as a bounded provider canary. Production needs an SMS provider, rate limits, CAPTCHA/abuse controls, country/regulatory review, and secret injection outside source and evidence.",
+      "sources": [
+        "https://supabase.com/docs/guides/local-development/cli/config",
+        "https://supabase.com/docs/guides/auth/phone-login",
+        "https://supabase.com/docs/guides/deployment/going-into-prod"
+      ],
+      "stability": "provider-current",
+      "contradiction": "Real SMS delivery is costly and nondeterministic, so it must not be the only CI oracle.",
+      "confidence": "high",
+      "enforcement": "fixed non-production OTP fixtures, secret-safe config, rate/spend preflight, real-SMS canary budget"
+    },
+    {
+      "question": "What are the platform boundaries for Apple and Google login?",
+      "installedVersion": null,
+      "applicableRange": "Current Expo, Apple, Android and Supabase documentation checked 2026-07-22",
+      "conclusion": "Use native Sign in with Apple on iOS and native/provider-correct Google flows on installed iOS and Android builds. Apple on Android is a separate OAuth/Services-ID capability with additional redirect and secret-rotation operations. Social provider canaries require real external identity evidence.",
+      "sources": [
+        "https://docs.expo.dev/versions/latest/sdk/apple-authentication/",
+        "https://developer.apple.com/app-store/review/guidelines/",
+        "https://developer.android.com/identity/sign-in/credential-manager-siwg",
+        "https://supabase.com/docs/guides/auth/quickstarts/with-expo-react-native-social-auth"
+      ],
+      "stability": "platform-and-provider-sensitive",
+      "contradiction": "Expo AppleAuthentication supports iOS rather than Android; an Android Apple flow therefore has a different native/operational contract and must not be inferred from iOS.",
+      "confidence": "high",
+      "enforcement": "platform-specific adapters, capability flags, native builds, real-provider canaries, portal metadata preflight"
+    },
+    {
+      "question": "What deletion behavior is required when the boilerplate creates accounts?",
+      "installedVersion": null,
+      "applicableRange": "Current Apple App Review and Google Play account-deletion guidance checked 2026-07-22",
+      "conclusion": "The base app needs an in-app account-deletion path. Apple-linked accounts require Apple token revocation. Google Play additionally requires a functional external web resource where users can request account and associated-data deletion.",
+      "sources": [
+        "https://developer.apple.com/support/offering-account-deletion-in-your-app/",
+        "https://support.google.com/googleplay/android-developer/answer/13327111"
+      ],
+      "stability": "store-policy-current",
+      "contradiction": "Logout, deactivation, or support email alone is not equivalent to complete account deletion for a normal consumer app.",
+      "confidence": "high",
+      "enforcement": "account-deletion scenario, recent-auth step, backend cascade oracle, Apple revocation proof, release configuration gate"
+    },
+    {
+      "question": "Can identities from different auth methods always be merged automatically?",
+      "installedVersion": null,
+      "applicableRange": "Current Supabase identity-linking documentation checked 2026-07-22",
+      "conclusion": "No. Supabase can automatically link verified identities with the same email and offers manual linking as beta, but phone-only, Apple private-relay, unverified and unrelated identities require an explicit collision/linking policy to avoid account takeover.",
+      "sources": [
+        "https://supabase.com/docs/guides/auth/auth-identity-linking",
+        "https://supabase.com/docs/guides/auth/identities"
+      ],
+      "stability": "provider-current-beta-feature-present",
+      "contradiction": "A normalized session contract does not imply that all external identifiers belong to one person or should share one backend user ID.",
+      "confidence": "high",
+      "enforcement": "collision scenarios, verified-linking policy, manual linking excluded until separately approved"
+    }
+  ]
+}

@@ -3,23 +3,25 @@
   "$id": "https://mobilka.local/schemas/run-state.schema.json",
   "title": "Agentic run state",
   "type": "object",
-  "required": ["schemaVersion", "id", "name", "workflow", "risk", "state", "revision", "digests", "digestSources", "approvals", "attempts", "failures", "circuitBreaker"],
+  "required": ["schemaVersion", "id", "name", "workflow", "risk", "state", "revision", "createdAt", "updatedAt", "digests", "digestSources", "approvals", "attempts", "attemptWindows", "failures", "circuitBreaker"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "id": { "type": "string", "minLength": 1 },
     "name": { "type": "string", "minLength": 1 },
-    "workflow": { "type": "string", "minLength": 1 },
+    "workflow": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
     "risk": { "enum": ["fast", "standard", "critical"] },
-    "state": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["DRAFT", "SPEC_PENDING", "SPEC_APPROVED", "PREFLIGHTING", "PLANNED", "IMPLEMENTING", "VERIFYING", "DEBUGGING", "REVIEWING", "ACCEPTANCE_PENDING", "ACCEPTED", "RC_BUILDING", "FINAL_QA_PENDING", "RELEASE_APPROVED", "RELEASING", "OBSERVING", "COMPLETED", "BLOCKED"] },
     "revision": { "type": "integer", "minimum": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
     "digests": {
       "type": "object",
       "required": ["spec", "environment", "evidence", "releaseArtifact"],
       "properties": {
-        "spec": { "type": ["string", "null"] },
-        "environment": { "type": ["string", "null"] },
-        "evidence": { "type": ["string", "null"] },
-        "releaseArtifact": { "type": ["string", "null"] }
+        "spec": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "environment": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "evidence": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "releaseArtifact": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
       },
       "additionalProperties": false
     },
@@ -34,16 +36,83 @@
       },
       "additionalProperties": false
     },
-    "approvals": { "type": "object" },
-    "attempts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
-    "failures": { "type": "array" },
+    "approvals": {
+      "type": "object",
+      "required": ["specification", "acceptance", "release"],
+      "properties": {
+        "specification": { "anyOf": [{ "type": "null" }, { "$ref": "https://mobilka.local/schemas/approval.schema.json" }] },
+        "acceptance": { "anyOf": [{ "type": "null" }, { "$ref": "https://mobilka.local/schemas/approval.schema.json" }] },
+        "release": { "anyOf": [{ "type": "null" }, { "$ref": "https://mobilka.local/schemas/approval.schema.json" }] }
+      },
+      "additionalProperties": false
+    },
+    "attempts": {
+      "type": "object",
+      "required": ["implementation", "review", "visual", "environment", "securityArchitecture", "debug", "releaseCandidate"],
+      "properties": {
+        "implementation": { "type": "integer", "minimum": 0 },
+        "review": { "type": "integer", "minimum": 0 },
+        "visual": { "type": "integer", "minimum": 0 },
+        "environment": { "type": "integer", "minimum": 0 },
+        "securityArchitecture": { "type": "integer", "minimum": 0 },
+        "debug": { "type": "integer", "minimum": 0 },
+        "releaseCandidate": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "attemptWindows": {
+      "type": "object",
+      "required": ["implementation", "review", "visual", "environment", "securityArchitecture", "debug", "releaseCandidate"],
+      "properties": {
+        "implementation": { "$ref": "#/$defs/attemptWindow" },
+        "review": { "$ref": "#/$defs/attemptWindow" },
+        "visual": { "$ref": "#/$defs/attemptWindow" },
+        "environment": { "$ref": "#/$defs/attemptWindow" },
+        "securityArchitecture": { "$ref": "#/$defs/attemptWindow" },
+        "debug": { "$ref": "#/$defs/attemptWindow" },
+        "releaseCandidate": { "$ref": "#/$defs/attemptWindow" }
+      },
+      "additionalProperties": false
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "failureClass", "signature", "evidence", "role"],
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "failureClass": { "enum": ["PRODUCT_FAILURE", "TEST_FAILURE", "FIXTURE_FAILURE", "BUILD_FAILURE", "ENVIRONMENT_FAILURE", "DEVICE_FAILURE", "EXTERNAL_SERVICE_FAILURE", "UNKNOWN"] },
+          "signature": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "role": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
     "circuitBreaker": {
       "type": "object",
       "required": ["open", "reason"],
       "properties": {
         "open": { "type": "boolean" },
         "reason": { "type": ["string", "null"] }
-      }
+      },
+      "additionalProperties": false
+    },
+    "blockedFrom": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "attemptWindow": {
+      "type": "object",
+      "required": ["baseline", "limit", "grantedBy", "grantedAt", "reason"],
+      "properties": {
+        "baseline": { "type": "integer", "minimum": 0 },
+        "limit": { "type": "integer", "minimum": 1 },
+        "grantedBy": { "type": ["string", "null"] },
+        "grantedAt": { "type": ["string", "null"], "format": "date-time" },
+        "reason": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }

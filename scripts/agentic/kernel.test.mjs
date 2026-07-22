@@ -12,12 +12,14 @@ import {
   loadKernel,
   monitorRuns,
   readRun,
+  recordAttempt,
   recordFailure,
   recordGuardrailViolation,
   resumeRun,
   setRunDigest,
   transitionRun
 } from './lib.mjs';
+import { createApprovalRequest, verifyGithubApproval } from './approvals.mjs';
 
 async function testKernel() {
   const temporary = await mkdtemp(path.join(os.tmpdir(), 'mobilka-agentic-'));
@@ -32,10 +34,69 @@ async function testKernel() {
   return { temporary, kernel, artifactRoot };
 }
 
+async function approveBootstrapSpecification(kernel, runDir, approvedBy = 'product-owner') {
+  kernel.approvalProviders.manual.bootstrapRunIds.push(path.basename(runDir));
+  return approveRun(kernel, runDir, 'specification', approvedBy);
+}
+
+async function approveGithubGate(kernel, runDir, gate) {
+  const github = kernel.approvalProviders.github;
+  github.enabled = true;
+  github.agentIdentity = { kind: 'GitHubApp', login: 'mobilka-agent[bot]', id: 4242 };
+  const commitSha = 'a'.repeat(40);
+  const now = Date.now();
+  const request = createApprovalRequest(kernel, await readRun(runDir), { gate, commitSha, now });
+  const requestPath = path.join(runDir, 'approval-requests', `${gate}-${request.requestId}.json`);
+  await mkdir(path.dirname(requestPath), { recursive: true });
+  await writeFile(requestPath, `${JSON.stringify(request, null, 2)}\n`);
+  const workflowRunId = 7001;
+  const run = {
+    id: workflowRunId,
+    repository: { id: github.repositoryId, full_name: github.repository },
+    event: 'workflow_dispatch',
+    path: `.github/workflows/${github.workflowFile}`,
+    head_branch: 'main',
+    display_title: `human-gate:${gate}:${request.requestId}:${request.requestDigest}`,
+    status: 'completed',
+    conclusion: 'success',
+    actor: { login: github.agentIdentity.login, id: github.agentIdentity.id, type: 'Bot' },
+    triggering_actor: { login: github.agentIdentity.login, id: github.agentIdentity.id, type: 'Bot' },
+    updated_at: new Date(now + 1_000).toISOString(),
+    html_url: `https://github.com/${github.repository}/actions/runs/${workflowRunId}`
+  };
+  const reviews = [{
+    state: 'approved',
+    environments: [{ name: github.environments[gate] }],
+    user: github.reviewers[0]
+  }];
+  const fetchImpl = async (url) => ({
+    ok: true,
+    status: 200,
+    json: async () => {
+      if (String(url).includes('/contents/.agentic/approval-providers.json')) {
+        return {
+          path: '.agentic/approval-providers.json',
+          encoding: 'base64',
+          content: Buffer.from(JSON.stringify(kernel.approvalProviders)).toString('base64')
+        };
+      }
+      return String(url).endsWith('/approvals') ? reviews : run;
+    }
+  });
+  kernel.approvalRuntime = { fetchImpl, token: 'test-installation-token', currentCommitSha: commitSha, now: now + 2_000 };
+  return verifyGithubApproval(kernel, runDir, {
+    requestPath,
+    workflowRunId,
+    ...kernel.approvalRuntime
+  });
+}
+
 async function completePreflight(kernel, runDir, artifactRoot) {
   const manifest = path.join(artifactRoot, 'environment.json');
   await writeFile(manifest, `${JSON.stringify({
     schemaVersion: 1,
+    profile: 'mobile-e2e',
+    workflow: 'develop-feature',
     status: 'ready',
     generatedAt: new Date().toISOString(),
     requiredChecks: ['node', 'agentDevice'],
@@ -68,7 +129,7 @@ test('specification gate blocks transition until a matching human approval exist
   await setRunDigest(kernel, runDir, 'spec', spec);
   await assert.rejects(() => transitionRun(kernel, runDir, 'SPEC_APPROVED'), /requires valid specification approval/);
 
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   const state = await transitionRun(kernel, runDir, 'SPEC_APPROVED');
   assert.equal(state.state, 'SPEC_APPROVED');
 });
@@ -79,7 +140,7 @@ test('changing the specification invalidates all downstream approvals', async ()
   const spec = path.join(artifactRoot, 'spec.md');
   await writeFile(spec, '# Spec v1\n');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   assert.equal(isApprovalValid(await readRun(runDir), 'specification'), true);
 
   await writeFile(spec, '# Spec v2\n');
@@ -96,7 +157,7 @@ test('a specification change during implementation blocks further transitions', 
   await writeFile(spec, '# Approved spec\n');
   await transitionRun(kernel, runDir, 'SPEC_PENDING');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   await transitionRun(kernel, runDir, 'SPEC_APPROVED');
   await completePreflight(kernel, runDir, artifactRoot);
   await transitionRun(kernel, runDir, 'IMPLEMENTING');
@@ -116,7 +177,7 @@ test('editing an approved artifact without refreshing its digest is detected', a
   await writeFile(spec, '# Approved spec\n');
   await transitionRun(kernel, runDir, 'SPEC_PENDING');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   await transitionRun(kernel, runDir, 'SPEC_APPROVED');
 
   await writeFile(spec, '# Edited behind the kernel\n');
@@ -160,13 +221,15 @@ test('planning is blocked until the environment manifest is ready and secret-saf
   await writeFile(spec, '# Approved spec\n');
   await transitionRun(kernel, runDir, 'SPEC_PENDING');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   await transitionRun(kernel, runDir, 'SPEC_APPROVED');
   await transitionRun(kernel, runDir, 'PREFLIGHTING');
   await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /requires environment digest/);
 
   await writeFile(environment, `${JSON.stringify({
     schemaVersion: 1,
+    profile: 'mobile-e2e',
+    workflow: 'develop-feature',
     status: 'ready',
     generatedAt: new Date().toISOString(),
     requiredChecks: ['agentDevice'],
@@ -177,7 +240,7 @@ test('planning is blocked until the environment manifest is ready and secret-saf
     blockers: []
   }, null, 2)}\n`);
   await setRunDigest(kernel, runDir, 'environment', environment);
-  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /secret or production boundary/);
+  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /secretBoundary\/valuesRecorded|secret or production boundary/);
 });
 
 test('planning rejects raw or production cryptographic key access in the environment manifest', async () => {
@@ -188,12 +251,14 @@ test('planning rejects raw or production cryptographic key access in the environ
   await writeFile(spec, '# Approved spec\n');
   await transitionRun(kernel, runDir, 'SPEC_PENDING');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   await transitionRun(kernel, runDir, 'SPEC_APPROVED');
   await transitionRun(kernel, runDir, 'PREFLIGHTING');
 
   await writeFile(environment, `${JSON.stringify({
     schemaVersion: 1,
+    profile: 'mobile-e2e',
+    workflow: 'develop-feature',
     status: 'ready',
     generatedAt: new Date().toISOString(),
     requiredChecks: ['dataProtectionPlan'],
@@ -204,7 +269,93 @@ test('planning rejects raw or production cryptographic key access in the environ
     blockers: []
   }, null, 2)}\n`);
   await setRunDigest(kernel, runDir, 'environment', environment);
-  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /cryptographic key boundary/);
+  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /keyBoundary\/valuesRecorded|cryptographic key boundary/);
+});
+
+test('control-plane preflight succeeds truthfully without native application identifiers', async () => {
+  const { kernel, artifactRoot } = await testKernel();
+  const { runDir } = await initRun(kernel, { name: 'control plane', risk: 'critical', workflow: 'harden-control-plane' });
+  const spec = path.join(artifactRoot, 'spec.md');
+  const environment = path.join(artifactRoot, 'control-plane.json');
+  await writeFile(spec, '# Control-plane specification\n');
+  await transitionRun(kernel, runDir, 'SPEC_PENDING');
+  await setRunDigest(kernel, runDir, 'spec', spec);
+  await approveBootstrapSpecification(kernel, runDir);
+  await transitionRun(kernel, runDir, 'SPEC_APPROVED');
+  await transitionRun(kernel, runDir, 'PREFLIGHTING');
+  await writeFile(environment, `${JSON.stringify({
+    schemaVersion: 1,
+    profile: 'control-plane',
+    workflow: 'harden-control-plane',
+    status: 'ready',
+    generatedAt: new Date().toISOString(),
+    requiredChecks: ['node', 'schemaRegistry'],
+    checks: {
+      node: { status: 'ready', version: process.version, evidence: ['node --version'], reason: null },
+      schemaRegistry: { status: 'ready', version: '1', evidence: ['npm run agentic:validate'], reason: null }
+    },
+    secretBoundary: { valuesRecorded: false, productionAccess: false, inventory: [] },
+    keyBoundary: { valuesRecorded: false, productionKeyAccess: false, inventory: [] },
+    blockers: []
+  }, null, 2)}\n`);
+  await setRunDigest(kernel, runDir, 'environment', environment);
+  assert.equal((await transitionRun(kernel, runDir, 'PLANNED')).state, 'PLANNED');
+});
+
+test('planning fails closed when the committed trust policy belongs to another repository', async () => {
+  const { kernel, artifactRoot } = await testKernel();
+  const { runDir } = await initRun(kernel, { name: 'inherited trust binding', risk: 'critical', workflow: 'harden-control-plane' });
+  const spec = path.join(artifactRoot, 'spec.md');
+  const environment = path.join(artifactRoot, 'control-plane.json');
+  await writeFile(spec, '# Control-plane specification\n');
+  await transitionRun(kernel, runDir, 'SPEC_PENDING');
+  await setRunDigest(kernel, runDir, 'spec', spec);
+  await approveBootstrapSpecification(kernel, runDir);
+  await transitionRun(kernel, runDir, 'SPEC_APPROVED');
+  await transitionRun(kernel, runDir, 'PREFLIGHTING');
+  await writeFile(environment, `${JSON.stringify({
+    schemaVersion: 1,
+    profile: 'control-plane',
+    workflow: 'harden-control-plane',
+    status: 'ready',
+    generatedAt: new Date().toISOString(),
+    requiredChecks: ['node'],
+    checks: { node: { status: 'ready', version: process.version, evidence: ['node --version'], reason: null } },
+    secretBoundary: { valuesRecorded: false, productionAccess: false, inventory: [] },
+    keyBoundary: { valuesRecorded: false, productionKeyAccess: false, inventory: [] },
+    blockers: []
+  }, null, 2)}\n`);
+  await setRunDigest(kernel, runDir, 'environment', environment);
+  kernel.approvalProviders.github.repository = 'source-template/inherited-repository';
+  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /Repository binding mismatch/);
+  assert.equal((await readRun(runDir)).state, 'PREFLIGHTING');
+});
+
+test('mobile workflow cannot bypass native readiness with the control-plane profile', async () => {
+  const { kernel, artifactRoot } = await testKernel();
+  const { runDir } = await initRun(kernel, { name: 'mobile bypass', risk: 'critical', workflow: 'develop-feature' });
+  const spec = path.join(artifactRoot, 'spec.md');
+  const environment = path.join(artifactRoot, 'wrong-profile.json');
+  await writeFile(spec, '# Mobile specification\n');
+  await transitionRun(kernel, runDir, 'SPEC_PENDING');
+  await setRunDigest(kernel, runDir, 'spec', spec);
+  await approveBootstrapSpecification(kernel, runDir);
+  await transitionRun(kernel, runDir, 'SPEC_APPROVED');
+  await transitionRun(kernel, runDir, 'PREFLIGHTING');
+  await writeFile(environment, `${JSON.stringify({
+    schemaVersion: 1,
+    profile: 'control-plane',
+    workflow: 'harden-control-plane',
+    status: 'ready',
+    generatedAt: new Date().toISOString(),
+    requiredChecks: ['node'],
+    checks: { node: { status: 'ready', version: process.version, evidence: ['node --version'], reason: null } },
+    secretBoundary: { valuesRecorded: false, productionAccess: false, inventory: [] },
+    keyBoundary: { valuesRecorded: false, productionKeyAccess: false, inventory: [] },
+    blockers: []
+  }, null, 2)}\n`);
+  await setRunDigest(kernel, runDir, 'environment', environment);
+  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /preflight mismatch/);
 });
 
 test('device verification cannot advance to review without evidence', async () => {
@@ -214,7 +365,7 @@ test('device verification cannot advance to review without evidence', async () =
   await writeFile(spec, '# Approved spec\n');
   await transitionRun(kernel, runDir, 'SPEC_PENDING');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   await transitionRun(kernel, runDir, 'SPEC_APPROVED');
   await completePreflight(kernel, runDir, artifactRoot);
   await transitionRun(kernel, runDir, 'IMPLEMENTING');
@@ -245,7 +396,7 @@ test('final QA rejection preserves the approved specification but invalidates do
 
   await transitionRun(kernel, runDir, 'SPEC_PENDING');
   await setRunDigest(kernel, runDir, 'spec', spec);
-  await approveRun(kernel, runDir, 'specification', 'product-owner');
+  await approveBootstrapSpecification(kernel, runDir);
   await transitionRun(kernel, runDir, 'SPEC_APPROVED');
   await completePreflight(kernel, runDir, artifactRoot);
   await transitionRun(kernel, runDir, 'IMPLEMENTING');
@@ -253,7 +404,7 @@ test('final QA rejection preserves the approved specification but invalidates do
   await setRunDigest(kernel, runDir, 'evidence', evidence);
   await transitionRun(kernel, runDir, 'REVIEWING');
   await transitionRun(kernel, runDir, 'ACCEPTANCE_PENDING');
-  await approveRun(kernel, runDir, 'acceptance', 'product-owner');
+  await approveGithubGate(kernel, runDir, 'acceptance');
   await transitionRun(kernel, runDir, 'ACCEPTED');
   await transitionRun(kernel, runDir, 'RC_BUILDING');
   await setRunDigest(kernel, runDir, 'releaseArtifact', releaseArtifact);
@@ -279,6 +430,39 @@ test('human resume returns a blocked run to the state where the breaker opened',
   assert.equal(resumed.state, 'DRAFT');
   assert.equal(resumed.circuitBreaker.open, false);
   assert.equal(Object.hasOwn(resumed, 'blockedFrom'), false);
+});
+
+test('human resume grants a fresh bounded attempt window without erasing lifetime attempts', async () => {
+  const { kernel } = await testKernel();
+  const { runDir } = await initRun(kernel, { name: 'budget grant', risk: 'critical' });
+  for (let index = 0; index < 4; index += 1) {
+    await recordAttempt(kernel, runDir, { bucket: 'debug', role: 'debugger', evidence: [`attempt-${index}.log`] });
+  }
+  assert.equal((await readRun(runDir)).state, 'BLOCKED');
+  await assert.rejects(
+    () => resumeRun(kernel, runDir, { approvedBy: 'product-owner', reason: 'new hypothesis' }),
+    /requires an explicit positive/
+  );
+
+  const resumed = await resumeRun(kernel, runDir, {
+    approvedBy: 'product-owner',
+    reason: 'three attempts for a materially different hypothesis',
+    budgetBucket: 'debug',
+    budgetLimit: 3
+  });
+  assert.equal(resumed.state, 'DRAFT');
+  assert.equal(resumed.attempts.debug, 4);
+  assert.equal(resumed.attemptWindows.debug.baseline, 4);
+  assert.equal(resumed.attemptWindows.debug.limit, 3);
+  assert.equal(auditState(kernel, resumed).status, 'clean');
+
+  for (let index = 0; index < 3; index += 1) {
+    const state = await recordAttempt(kernel, runDir, { bucket: 'debug', role: 'debugger', evidence: [`new-attempt-${index}.log`] });
+    assert.notEqual(state.state, 'BLOCKED');
+  }
+  const blocked = await recordAttempt(kernel, runDir, { bucket: 'debug', role: 'debugger', evidence: ['new-attempt-4.log'] });
+  assert.equal(blocked.state, 'BLOCKED');
+  assert.equal(blocked.attempts.debug, 8);
 });
 
 test('repository monitor blocks duplicate active objectives', async () => {

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/approval-request.schema.json",
+  "title": "Canonical human gate request",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "repository", "repositoryId", "trustPolicyDigest", "runId", "gate", "revision", "digestSnapshot", "commitSha", "requestId", "requestDigest", "environment", "workflowFile", "trustedRef", "createdAt", "expiresAt"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "provider": { "const": "github-environment" },
+    "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+    "repositoryId": { "type": "integer", "minimum": 1 },
+    "trustPolicyDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "runId": { "type": "string", "minLength": 1 },
+    "gate": { "enum": ["specification", "acceptance", "release"] },
+    "revision": { "type": "integer", "minimum": 1 },
+    "digestSnapshot": { "$ref": "https://mobilka.local/schemas/approval.schema.json#/properties/digestSnapshot" },
+    "commitSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "requestId": { "type": "string", "format": "uuid" },
+    "requestDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "environment": { "enum": ["h1-specification", "h2-acceptance", "h3-release"] },
+    "workflowFile": { "type": "string", "minLength": 1 },
+    "trustedRef": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

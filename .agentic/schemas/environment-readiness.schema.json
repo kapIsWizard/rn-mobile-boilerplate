@@ -1,11 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://mobilka.local/schemas/environment-readiness.schema.json",
-  "title": "Native environment readiness manifest",
+  "title": "Workflow-aware environment readiness manifest",
   "type": "object",
-  "required": ["schemaVersion", "status", "generatedAt", "requiredChecks", "checks", "identifiers", "secretBoundary", "keyBoundary", "blockers"],
+  "required": ["schemaVersion", "status", "generatedAt", "requiredChecks", "checks", "secretBoundary", "keyBoundary", "blockers"],
   "properties": {
     "schemaVersion": { "const": 1 },
+    "profile": { "enum": ["control-plane", "mobile-development", "mobile-e2e", "mobile-release"] },
+    "workflow": { "type": "string", "minLength": 1 },
     "status": { "enum": ["ready", "blocked"] },
     "generatedAt": { "type": "string", "format": "date-time" },
     "requiredChecks": {
@@ -16,9 +18,10 @@
     },
     "checks": {
       "type": "object",
+      "minProperties": 1,
       "additionalProperties": {
         "type": "object",
-        "required": ["status", "evidence"],
+        "required": ["status", "evidence", "reason"],
         "properties": {
           "status": { "enum": ["ready", "blocked", "not-required"] },
           "version": { "type": ["string", "null"] },
@@ -50,10 +53,10 @@
             "type": "object",
             "required": ["name", "classification", "owner", "storage"],
             "properties": {
-              "name": { "type": "string" },
+              "name": { "type": "string", "minLength": 1 },
               "classification": { "enum": ["public-client-config", "sensitive-build-secret", "server-only-secret", "signing-credential"] },
-              "owner": { "type": "string" },
-              "storage": { "type": "string" }
+              "owner": { "type": "string", "minLength": 1 },
+              "storage": { "type": "string", "minLength": 1 }
             },
             "additionalProperties": false
           }
@@ -77,7 +80,13 @@
               "class": { "enum": ["DEK", "KEK", "device-wrapping", "recovery", "provider-managed", "session"] },
               "owner": { "type": "string", "minLength": 1 },
               "location": { "type": "string", "minLength": 1 },
-              "version": { "type": ["string", "number", "null"] },
+              "version": {
+                "anyOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "null" }
+                ]
+              },
               "exportable": { "type": "boolean" },
               "status": { "enum": ["active", "pending", "retiring", "revoked", "provider-managed"] }
             },
@@ -89,5 +98,41 @@
     },
     "blockers": { "type": "array", "items": { "type": "string" } }
   },
+  "allOf": [
+    {
+      "if": { "required": ["profile"], "properties": { "profile": { "const": "control-plane" } } },
+      "then": {
+        "properties": {
+          "workflow": { "const": "harden-control-plane" },
+          "identifiers": false
+        },
+        "required": ["workflow"]
+      }
+    },
+    {
+      "if": { "required": ["profile"], "properties": { "profile": { "enum": ["mobile-development", "mobile-e2e", "mobile-release"] } } },
+      "then": { "properties": { "workflow": {}, "identifiers": {} }, "required": ["workflow", "identifiers"] }
+    },
+    {
+      "if": {
+        "required": ["profile", "status"],
+        "properties": {
+          "profile": { "enum": ["mobile-development", "mobile-e2e", "mobile-release"] },
+          "status": { "const": "ready" }
+        }
+      },
+      "then": {
+        "properties": {
+          "identifiers": {
+            "type": "object",
+            "properties": {
+              "iosBundleId": { "not": { "type": "string", "pattern": "replace-me" } },
+              "androidApplicationId": { "not": { "type": "string", "pattern": "replace-me" } }
+            }
+          }
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }

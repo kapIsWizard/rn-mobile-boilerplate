@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "agentic config rejects the wrong schema version",
+  "schemaId": "https://mobilka.local/schemas/agentic-config.schema.json",
+  "value": {
+    "schemaVersion": 2
+  },
+  "expected": {
+    "keyword": "const",
+    "instancePath": "/schemaVersion"
+  }
+}

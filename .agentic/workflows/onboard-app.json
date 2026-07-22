@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "onboard-app",
+  "preflightProfile": "mobile-e2e",
   "humanGates": ["specification", "acceptance"],
   "stages": ["inventory", "risk", "characterization", "secret-and-production-boundary", "plaintext-and-crypto-inventory", "key-lifecycle-and-recovery-audit", "environment-recovery", "native-build", "agent-device-canary", "cross-platform-characterization", "observability-canary", "gap-report", "migration-plan", "acceptance"]
 }

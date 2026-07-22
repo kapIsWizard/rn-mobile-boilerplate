@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/negative-fixture.schema.json",
+  "title": "Focused negative contract fixture",
+  "type": "object",
+  "required": ["schemaVersion", "name", "schemaId", "value", "expected"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "schemaId": { "type": "string", "format": "uri" },
+    "value": {},
+    "expected": {
+      "type": "object",
+      "required": ["keyword", "instancePath"],
+      "properties": {
+        "keyword": { "type": "string", "minLength": 1 },
+        "instancePath": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

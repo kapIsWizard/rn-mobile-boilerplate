@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/approval-provider-config.schema.json",
+  "title": "Approval provider trust configuration",
+  "type": "object",
+  "required": ["schemaVersion", "mode", "manual", "github"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "mode": { "enum": ["bootstrap", "enforced"] },
+    "manual": {
+      "type": "object",
+      "required": ["enabled", "allowedGates", "bootstrapRunIds"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "allowedGates": { "type": "array", "items": { "const": "specification" }, "uniqueItems": true },
+        "bootstrapRunIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "additionalProperties": false
+    },
+    "github": {
+      "type": "object",
+      "required": ["enabled", "apiBaseUrl", "apiVersion", "tokenEnv", "repository", "repositoryId", "workflowFile", "trustedRef", "environments", "reviewers", "preventSelfReview", "allowAdminBypass", "agentIdentity"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "apiBaseUrl": { "const": "https://api.github.com" },
+        "apiVersion": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "tokenEnv": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "repositoryId": { "type": "integer", "minimum": 1 },
+        "workflowFile": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+\\.ya?ml$" },
+        "trustedRef": { "type": "string", "pattern": "^refs/heads/[A-Za-z0-9._/-]+$" },
+        "environments": {
+          "type": "object",
+          "required": ["specification", "acceptance", "release"],
+          "properties": {
+            "specification": { "type": "string", "minLength": 1 },
+            "acceptance": { "type": "string", "minLength": 1 },
+            "release": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "reviewers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": ["login", "id", "type"],
+            "properties": {
+              "login": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$" },
+              "id": { "type": "integer", "minimum": 1 },
+              "type": { "const": "User" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "preventSelfReview": { "const": true },
+        "allowAdminBypass": { "const": false },
+        "agentIdentity": {
+          "type": "object",
+          "required": ["kind", "login", "id"],
+          "properties": {
+            "kind": { "const": "GitHubApp" },
+            "login": {
+              "anyOf": [
+                { "type": "null" },
+                { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?(?:\\[bot\\])?$" }
+              ]
+            },
+            "id": { "type": ["integer", "null"], "minimum": 1 }
+          },
+          "oneOf": [
+            {
+              "required": ["login", "id"],
+              "properties": { "login": { "type": "null" }, "id": { "type": "null" } }
+            },
+            {
+              "required": ["login", "id"],
+              "properties": { "login": { "type": "string" }, "id": { "type": "integer", "minimum": 1 } }
+            }
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "enforced" } }, "required": ["mode"] },
+      "then": {
+        "properties": {
+          "manual": {
+            "type": "object",
+            "properties": {
+              "enabled": { "const": false },
+              "allowedGates": { "type": "array", "maxItems": 0 },
+              "bootstrapRunIds": { "type": "array", "maxItems": 0 }
+            }
+          },
+          "github": {
+            "type": "object",
+            "properties": {
+              "enabled": { "const": true },
+              "agentIdentity": {
+                "type": "object",
+                "properties": {
+                  "login": { "type": "string", "minLength": 1 },
+                  "id": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

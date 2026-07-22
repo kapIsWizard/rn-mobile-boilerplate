@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    { "id": "npm-package", "kind": "schema", "glob": "package.json", "schemaId": "https://mobilka.local/schemas/package.schema.json" },
+    { "id": "npm-lockfile", "kind": "schema", "glob": "package-lock.json", "schemaId": "https://mobilka.local/schemas/npm-lockfile.schema.json" },
+    { "id": "schema-registry", "kind": "schema", "glob": ".agentic/schema-registry.json", "schemaId": "https://mobilka.local/schemas/schema-registry.schema.json" },
+    { "id": "approval-providers", "kind": "schema", "glob": ".agentic/approval-providers.json", "schemaId": "https://mobilka.local/schemas/approval-provider-config.schema.json" },
+    { "id": "agentic-config", "kind": "schema", "glob": ".agentic/config.json", "schemaId": "https://mobilka.local/schemas/agentic-config.schema.json" },
+    { "id": "capabilities", "kind": "schema", "glob": ".agentic/capabilities.json", "schemaId": "https://mobilka.local/schemas/capabilities.schema.json" },
+    { "id": "environment-catalog", "kind": "schema", "glob": ".agentic/environments.json", "schemaId": "https://mobilka.local/schemas/environment-catalog.schema.json" },
+    { "id": "risk-policy", "kind": "schema", "glob": ".agentic/policies/risk.json", "schemaId": "https://mobilka.local/schemas/risk-policy.schema.json" },
+    { "id": "state-machine-policy", "kind": "schema", "glob": ".agentic/policies/state-machine.json", "schemaId": "https://mobilka.local/schemas/state-machine.schema.json" },
+    { "id": "guardrails-policy", "kind": "schema", "glob": ".agentic/policies/guardrails.json", "schemaId": "https://mobilka.local/schemas/guardrails.schema.json" },
+    { "id": "json-schemas", "kind": "schema", "glob": ".agentic/schemas/*.schema.json", "schemaId": "https://json-schema.org/draft/2020-12/schema" },
+    { "id": "workflow-definitions", "kind": "schema", "glob": ".agentic/workflows/*.json", "schemaId": "https://mobilka.local/schemas/workflow.schema.json" },
+    { "id": "negative-fixtures", "kind": "schema", "glob": ".agentic/fixtures/negative/*.json", "schemaId": "https://mobilka.local/schemas/negative-fixture.schema.json" },
+    { "id": "evidence-template", "kind": "schema", "glob": "acceptance/templates/evidence.json", "schemaId": "https://mobilka.local/schemas/evidence.schema.json" },
+    { "id": "operator-checklist-template", "kind": "schema", "glob": "acceptance/templates/operator-checklist.json", "schemaId": "https://mobilka.local/schemas/operator-checklist.schema.json" },
+    { "id": "scenario-manifest-template", "kind": "schema", "glob": "acceptance/templates/scenario.manifest.json", "schemaId": "https://mobilka.local/schemas/scenario-manifest.schema.json" },
+    { "id": "visual-template", "kind": "schema", "glob": "acceptance/templates/visual-contract.json", "schemaId": "https://mobilka.local/schemas/visual-template.schema.json" },
+    { "id": "data-protection-templates", "kind": "schema", "glob": "security/templates/*.json", "schemaId": "https://mobilka.local/schemas/data-protection-contract.schema.json" },
+    { "id": "data-protection-requirements", "kind": "schema", "glob": "docs/requirements/**/data-protection-contract.json", "schemaId": "https://mobilka.local/schemas/data-protection-contract.schema.json" },
+    { "id": "visual-requirements", "kind": "schema", "glob": "docs/requirements/**/visual-contract.json", "schemaId": "https://mobilka.local/schemas/visual-reference-contract.schema.json" },
+    { "id": "freshness-records", "kind": "schema", "glob": "docs/guidebook/freshness/*.json", "schemaId": "https://mobilka.local/schemas/freshness-record.schema.json" },
+    { "id": "environment-manifests", "kind": "schema", "glob": "environment/**/*.json", "schemaId": "https://mobilka.local/schemas/environment-readiness.schema.json" },
+    { "id": "upstream-locks", "kind": "schema", "glob": "upstream/*.lock.json", "schemaId": "https://mobilka.local/schemas/upstream-lock.schema.json" },
+    { "id": "control-plane-evidence", "kind": "schema", "glob": "evidence/phase-0-hardening/*.json", "schemaId": "https://mobilka.local/schemas/control-plane-evidence.schema.json" }
+  ],
+  "negativeFixtures": [
+    ".agentic/fixtures/negative/agentic-config.invalid.json",
+    ".agentic/fixtures/negative/workflow.invalid.json",
+    ".agentic/fixtures/negative/run-state.invalid.json",
+    ".agentic/fixtures/negative/approval.invalid.json",
+    ".agentic/fixtures/negative/environment-readiness.invalid.json",
+    ".agentic/fixtures/negative/evidence.invalid.json"
+  ]
+}

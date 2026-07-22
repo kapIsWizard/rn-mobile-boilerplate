@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/package.schema.json",
+  "title": "Repository package manifest",
+  "type": "object",
+  "required": ["name", "version", "private", "type", "engines", "scripts", "dependencies"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+    "private": { "const": true },
+    "type": { "const": "module" },
+    "engines": {
+      "type": "object",
+      "required": ["node"],
+      "properties": { "node": { "type": "string", "minLength": 1 } },
+      "additionalProperties": false
+    },
+    "scripts": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
+    "dependencies": {
+      "type": "object",
+      "required": ["ajv", "ajv-formats"],
+      "properties": {
+        "ajv": { "const": "8.20.0" },
+        "ajv-formats": { "const": "3.0.1" }
+      },
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,6 +1,13 @@
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadJson } from './lib.mjs';
+import { createContractValidator } from './contracts.mjs';
+import {
+  assertCodeownersBinding,
+  assertRepositoryBinding,
+  readRepositoryContext,
+  validateTrustPolicyInvariants
+} from './trust.mjs';
 
 const root = process.cwd();
 const errors = [];
@@ -8,12 +15,21 @@ const requiredJson = [
   '.agentic/config.json',
   '.agentic/capabilities.json',
   '.agentic/environments.json',
+  '.agentic/approval-providers.json',
   '.agentic/policies/risk.json',
   '.agentic/policies/state-machine.json',
   '.agentic/policies/guardrails.json'
 ];
 
 const loaded = new Map();
+
+try {
+  const contracts = await createContractValidator(root);
+  const report = await contracts.validateRepository();
+  errors.push(...report.errors);
+} catch (error) {
+  errors.push(`contract validator startup: ${error.message}`);
+}
 
 for (const relative of requiredJson) {
   try {
@@ -25,6 +41,7 @@ for (const relative of requiredJson) {
 
 const config = loaded.get('.agentic/config.json');
 const stateMachine = loaded.get('.agentic/policies/state-machine.json');
+const approvalProviders = loaded.get('.agentic/approval-providers.json');
 if (config && stateMachine) {
   const states = new Set([...Object.keys(stateMachine.transitions), ...stateMachine.terminalStates]);
   const digests = new Set(['spec', 'environment', 'evidence', 'releaseArtifact']);
@@ -47,6 +64,17 @@ if (config && stateMachine) {
   }
   if (!config.monitoring || config.monitoring.maxSilentMinutes <= 0 || config.monitoring.maxActiveRunsPerObjective <= 0) {
     errors.push('config: monitoring limits must be positive');
+  }
+}
+
+if (approvalProviders) {
+  try {
+    validateTrustPolicyInvariants(approvalProviders);
+    assertRepositoryBinding(approvalProviders, await readRepositoryContext(root));
+    const codeowners = await readFile(path.join(root, '.github/CODEOWNERS'), 'utf8');
+    assertCodeownersBinding(codeowners, approvalProviders.github.reviewers);
+  } catch (error) {
+    errors.push(error.message);
   }
 }
 
@@ -135,7 +163,44 @@ try {
   errors.push(`skills root: ${error.message}`);
 }
 
-for (const relative of ['AGENTS.md', 'package.json', 'scripts/agentic/cli.mjs']) {
+try {
+  const gateWorkflow = await readFile(path.join(root, '.github/workflows/human-gate.yml'), 'utf8');
+  for (const expected of [
+    'workflow_dispatch:',
+    'run-name: human-gate:${{ inputs.gate }}:${{ inputs.request_id }}:${{ inputs.request_digest }}',
+    'trust_policy_digest:',
+    'name: h1-specification',
+    'name: h2-acceptance',
+    'name: h3-release',
+    'permissions:\n  contents: read'
+  ]) {
+    if (!gateWorkflow.includes(expected)) errors.push(`human gate workflow: missing trusted control ${expected}`);
+  }
+  for (const forbidden of ['pull_request_target:', 'actions/checkout', 'permissions: write-all']) {
+    if (gateWorkflow.includes(forbidden)) errors.push(`human gate workflow: forbidden trust expansion ${forbidden}`);
+  }
+} catch (error) {
+  errors.push(`human gate workflow: ${error.message}`);
+}
+
+try {
+  const ciWorkflow = await readFile(path.join(root, '.github/workflows/agentic-foundation.yml'), 'utf8');
+  if (!ciWorkflow.includes('run: npm ci')) errors.push('agentic CI: dependency installation must use npm ci');
+  if (!ciWorkflow.includes('run: npm run agentic:check')) errors.push('agentic CI: required check must run agentic:check');
+} catch (error) {
+  errors.push(`agentic CI: ${error.message}`);
+}
+
+try {
+  const codeowners = await readFile(path.join(root, '.github/CODEOWNERS'), 'utf8');
+  for (const protectedPath of ['/.github/', '/.agentic/', '/scripts/agentic/', '/package-lock.json']) {
+    if (!codeowners.includes(protectedPath)) errors.push(`CODEOWNERS: missing protected path ${protectedPath}`);
+  }
+} catch (error) {
+  errors.push(`CODEOWNERS: ${error.message}`);
+}
+
+for (const relative of ['AGENTS.md', 'package.json', 'package-lock.json', 'scripts/agentic/cli.mjs', 'docs/operations/github-human-gates.md']) {
   try {
     await access(path.join(root, relative));
   } catch {

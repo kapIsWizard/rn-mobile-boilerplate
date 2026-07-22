@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "mode": "bootstrap",
+  "manual": {
+    "enabled": true,
+    "allowedGates": ["specification"],
+    "bootstrapRunIds": ["2026-07-21T23-15-40-015Z-phase-0-hardening"]
+  },
+  "github": {
+    "enabled": false,
+    "apiBaseUrl": "https://api.github.com",
+    "apiVersion": "2026-03-10",
+    "tokenEnv": "GITHUB_APP_INSTALLATION_TOKEN",
+    "repository": "kapIsWizard/rn-mobile-boilerplate",
+    "repositoryId": 1308181084,
+    "workflowFile": "human-gate.yml",
+    "trustedRef": "refs/heads/main",
+    "environments": {
+      "specification": "h1-specification",
+      "acceptance": "h2-acceptance",
+      "release": "h3-release"
+    },
+    "reviewers": [
+      {
+        "login": "kapIsWizard",
+        "id": 96981818,
+        "type": "User"
+      }
+    ],
+    "preventSelfReview": true,
+    "allowAdminBypass": false,
+    "agentIdentity": {
+      "kind": "GitHubApp",
+      "login": null,
+      "id": null
+    }
+  }
+}

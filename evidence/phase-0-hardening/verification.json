@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-07-21T23-15-40-015Z-phase-0-hardening",
+  "commitSha": "bbbfe6c23bb569720b7828deab173349b4fdf54c",
+  "generatedAt": "2026-07-22T01:48:51Z",
+  "requirements": [
+    {
+      "id": "REQ-HARD-001",
+      "status": "verified",
+      "evidence": ["scripts/agentic/kernel.test.mjs", "environment/runs/phase-0-hardening.json"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-002",
+      "status": "verified",
+      "evidence": [".agentic/schema-registry.json", "scripts/agentic/contracts.test.mjs"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-003",
+      "status": "verified",
+      "evidence": ["scripts/agentic/contracts.mjs", ".agentic/fixtures/negative", "npm run agentic:check: 40/40 tests passed"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-004",
+      "status": "verified",
+      "evidence": ["package-lock.json", ".github/workflows/agentic-foundation.yml", "GitHub Actions run 29884082497: success on commit 36d8199241114378e9d5c1406e92ccccdf05a87c"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-005",
+      "status": "verified",
+      "evidence": ["scripts/agentic/approvals.mjs", "scripts/agentic/approvals.test.mjs", "trustPolicyDigest request binding", "clean-worktree commit binding"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-006",
+      "status": "partially-verified",
+      "evidence": [".github/workflows/human-gate.yml", "scripts/agentic/approvals.test.mjs", "docs/operations/github-human-gates.md"],
+      "reason": "Recorded API fixtures pass; the protected-environment canary requires operator configuration on GitHub."
+    },
+    {
+      "id": "REQ-HARD-007",
+      "status": "requires-human",
+      "evidence": [".agentic/approval-providers.json", ".github/CODEOWNERS", "docs/operations/github-human-gates.md"],
+      "reason": "The dedicated GitHub App login/ID, environment settings, and no-bypass branch protection are not configured yet."
+    },
+    {
+      "id": "REQ-HARD-008",
+      "status": "partially-verified",
+      "evidence": ["scripts/agentic/approvals.test.mjs", "scripts/agentic/approvals.mjs"],
+      "reason": "Mutation, replay, identity, rejection, expiry, trusted-policy, repository-binding, rotation, and outage fixtures pass; live provider behavior awaits canary."
+    },
+    {
+      "id": "REQ-HARD-009",
+      "status": "verified",
+      "evidence": ["scripts/agentic/lib.mjs", ".agentic/schemas/approval-provider-config.schema.json", "scripts/agentic/approvals.test.mjs"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-010",
+      "status": "verified",
+      "evidence": [".agentic/telemetry/workflow-events.jsonl", "npm run agentic:monitor: clean", "npm run agentic:audit: clean with 46 events and 8 classified failures", "docs/requirements/phase-0-hardening/architecture-decisions.md"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-011",
+      "status": "verified",
+      "evidence": ["scripts/agentic/trust.test.mjs", ".agentic/schemas/approval-provider-config.schema.json", "reusable-source deployment-constant scan"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-012",
+      "status": "verified",
+      "evidence": ["scripts/agentic/trust.mjs", "scripts/agentic/trust.test.mjs", "scripts/agentic/validate.mjs", "scripts/agentic/kernel.test.mjs"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-013",
+      "status": "partially-verified",
+      "evidence": ["scripts/agentic/approvals.mjs", "scripts/agentic/approvals.test.mjs", "scripts/agentic/trust.mjs", "trustPolicyDigest rotation test"],
+      "reason": "Prior requests are invalidated by the full trusted-policy digest and rebind is explicit; protected default-branch review and a new live canary remain operator evidence."
+    }
+  ],
+  "checks": {
+    "cleanInstall": {
+      "status": "passed",
+      "evidence": ["Prior revision local npm ci: exit 0; dependency graph unchanged in revision 2"],
+      "reason": null
+    },
+    "contractAndUnitSuite": {
+      "status": "passed",
+      "evidence": ["npm run agentic:check: 40 tests passed, 0 failed"],
+      "reason": null
+    },
+    "repositoryMonitor": {
+      "status": "passed",
+      "evidence": ["npm run agentic:monitor: clean in VERIFYING"],
+      "reason": null
+    },
+    "behaviorAudit": {
+      "status": "passed",
+      "evidence": ["npm run agentic:audit -- .agentic/runs/2026-07-21T23-15-40-015Z-phase-0-hardening: clean"],
+      "reason": null
+    },
+    "secretBoundaryScan": {
+      "status": "passed",
+      "evidence": ["changed-tree credential pattern scan returned no files"],
+      "reason": null
+    },
+    "githubActionsRequiredCheck": {
+      "status": "passed",
+      "evidence": ["https://github.com/kapIsWizard/rn-mobile-boilerplate/actions/runs/29884082497", "Agentic foundation / verify: success"],
+      "reason": null
+    },
+    "githubProtectedEnvironmentCanary": {
+      "status": "requires-human",
+      "evidence": ["docs/operations/github-human-gates.md"],
+      "reason": "Dedicated GitHub App and h1/h2/h3 protected environments are not configured."
+    },
+    "nativeBuildsAndDevices": {
+      "status": "not-required",
+      "evidence": ["approved Phase 0 out-of-scope list", "control-plane preflight profile"],
+      "reason": "This is a control-plane workflow; no mobile application artifact exists in this run."
+    }
+  },
+  "knownGaps": [
+    "No dedicated GitHub App installation identity is configured in .agentic/approval-providers.json.",
+    "Protected environments h1-specification, h2-acceptance, and h3-release have not been operator-verified.",
+    "The external H2 request, human review, independent API verification, and one-time consumption have not been exercised live."
+  ],
+  "result": "requires-human"
+}

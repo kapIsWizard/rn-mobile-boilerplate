@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-07-22",
+  "records": [
+    {
+      "question": "How should this Node control plane validate Draft 2020-12 JSON Schemas?",
+      "installedVersion": "ajv@8.20.0; ajv-formats@3.0.1",
+      "applicableRange": "Ajv 8.20.0 and ajv-formats 3.0.1 checked 2026-07-22",
+      "conclusion": "Pin Ajv and ajv-formats, use Ajv's dedicated Draft 2020-12 class in strict mode, compile the complete offline registry, and validate artifacts plus focused negative fixtures in CI.",
+      "sources": [
+        "https://ajv.js.org/json-schema.html",
+        "https://ajv.js.org/strict-mode.html",
+        "https://json-schema.org/draft/2020-12"
+      ],
+      "stability": "version-sensitive",
+      "contradiction": "Draft 2020-12 is not backward compatible in the same Ajv instance with earlier drafts; schema draft selection must be explicit.",
+      "confidence": "high",
+      "enforcement": "H1 dependency decision, lockfile, registry compilation, CI positive and negative tests"
+    },
+    {
+      "question": "Can GitHub protected environments provide credible human gate evidence?",
+      "installedVersion": null,
+      "applicableRange": "GitHub Actions environments and workflow-run REST API version 2026-03-10 checked 2026-07-22",
+      "conclusion": "Yes, when required reviewers, prevent self-review, disabled admin bypass, distinct requester/reviewer identities, a trusted default-branch workflow, immutable request inputs, and independent review-history verification are all enforced. Environment approval alone does not bind the repository's digest contract.",
+      "sources": [
+        "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments",
+        "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments",
+        "https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2026-03-10",
+        "https://docs.github.com/en/rest/actions/workflows?apiVersion=2026-03-10"
+      ],
+      "stability": "provider-current",
+      "contradiction": "A local claimed reviewer name, issue comment, or same-identity approval is not equivalent to protected-environment evidence.",
+      "confidence": "high",
+      "enforcement": "H1/H2/H3 approval adapter, reviewer allowlist, bound request, fail-closed provider verification"
+    },
+    {
+      "question": "How should the agent authenticate separately from the human reviewer?",
+      "installedVersion": null,
+      "applicableRange": "GitHub App authentication checked 2026-07-22",
+      "conclusion": "Use a repository-scoped GitHub App installation identity with least-privileged, short-lived installation tokens. Attribute agent operations to the app and keep the human SSH/account identity outside agent operation.",
+      "sources": [
+        "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/about-authentication-with-a-github-app",
+        "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation"
+      ],
+      "stability": "provider-current",
+      "contradiction": "Using the human's SSH key or token for the agent collapses identity separation and cannot support credible prevent-self-review evidence.",
+      "confidence": "high",
+      "enforcement": "operator configuration, GitHub App permission review, protected environments, negative identity tests"
+    }
+  ]
+}

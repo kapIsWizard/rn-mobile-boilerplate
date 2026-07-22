@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/freshness-record.schema.json",
+  "title": "Documentation freshness record",
+  "type": "object",
+  "required": ["schemaVersion", "verifiedAt", "records"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "verifiedAt": { "type": "string", "format": "date" },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["question", "installedVersion", "applicableRange", "conclusion", "sources", "stability", "contradiction", "confidence", "enforcement"],
+        "properties": {
+          "question": { "type": "string", "minLength": 1 },
+          "installedVersion": { "type": ["string", "null"] },
+          "applicableRange": { "type": "string", "minLength": 1 },
+          "conclusion": { "type": "string", "minLength": 1 },
+          "sources": { "type": "array", "minItems": 1, "items": { "type": "string", "format": "uri" } },
+          "stability": { "type": "string", "minLength": 1 },
+          "contradiction": { "type": "string", "minLength": 1 },
+          "confidence": { "enum": ["low", "medium-low", "medium", "medium-high", "high"] },
+          "enforcement": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

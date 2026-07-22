@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "profile": "control-plane",
+  "workflow": "harden-control-plane",
+  "status": "ready",
+  "generatedAt": "2026-07-22T01:22:31Z",
+  "requiredChecks": [
+    "node",
+    "packageManager",
+    "repository",
+    "baseline",
+    "ciPolicy",
+    "approvalProviderTarget",
+    "trustBootstrapInputs",
+    "productionBoundary"
+  ],
+  "checks": {
+    "node": {
+      "status": "ready",
+      "version": "v24.12.0",
+      "evidence": ["node --version"],
+      "reason": null
+    },
+    "packageManager": {
+      "status": "ready",
+      "version": "npm 11.6.2",
+      "evidence": ["npm --version", "package.json engines.node >=22"],
+      "reason": null
+    },
+    "repository": {
+      "status": "ready",
+      "version": "git 2.50.1",
+      "evidence": ["origin git@github.com:kapIsWizard/rn-mobile-boilerplate.git", "branch codex/phase-0-hardening-spec"],
+      "reason": null
+    },
+    "baseline": {
+      "status": "ready",
+      "version": "29 tests",
+      "evidence": ["npm run agentic:check", "npm run agentic:monitor", "phase-0 revision 2 H1 digest 6596cb8dcf4efceaa5e9085d004a03b3acdb7c392b09c1a1b38231ddda6d5366"],
+      "reason": null
+    },
+    "ciPolicy": {
+      "status": "ready",
+      "version": "agentic-foundation-v1",
+      "evidence": [".github/workflows/agentic-foundation.yml", "workflow permissions contents:read"],
+      "reason": null
+    },
+    "approvalProviderTarget": {
+      "status": "ready",
+      "version": "github-environment-v1-revision-2",
+      "evidence": ["docs/requirements/phase-0-hardening/architecture-decisions.md#adr-hard-003--github-protected-environments-for-h1h2h3", "human reviewer kapIsWizard; separate agent GitHub App required before H2"],
+      "reason": "Architecture and ownership metadata are ready for implementation; live environment, GitHub App, and canary are H2 exit evidence, not pre-existing implementation inputs."
+    },
+    "trustBootstrapInputs": {
+      "status": "ready",
+      "version": "repository-binding-v1",
+      "evidence": ["origin git@github.com:kapIsWizard/rn-mobile-boilerplate.git", "repository ID 1308181084", "human reviewer kapIsWizard immutable user ID 96981818", "ADR-HARD-006 generic policy plus generated repository binding"],
+      "reason": "Only non-secret identity metadata is in scope. A dedicated agent GitHub App identity and live protected environments remain required H2 operator evidence; enforced mode must stay disabled until they exist."
+    },
+    "productionBoundary": {
+      "status": "ready",
+      "version": "non-production-only",
+      "evidence": ["No production credentials required", "No mobile, backend, device, store, or customer-data access required"],
+      "reason": null
+    }
+  },
+  "secretBoundary": {
+    "valuesRecorded": false,
+    "productionAccess": false,
+    "inventory": [
+      {
+        "name": "future GitHub App installation credential",
+        "classification": "server-only-secret",
+        "owner": "repository operator",
+        "storage": "GitHub environment or approved local secret store; not provisioned or required for local implementation"
+      }
+    ]
+  },
+  "keyBoundary": {
+    "valuesRecorded": false,
+    "productionKeyAccess": false,
+    "inventory": []
+  },
+  "blockers": []
+}

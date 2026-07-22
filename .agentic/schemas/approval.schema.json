@@ -1,25 +1,76 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://mobilka.local/schemas/approval.schema.json",
-  "title": "Human approval",
+  "title": "Human approval evidence",
   "type": "object",
   "required": ["schemaVersion", "gate", "status", "source", "approvedBy", "approvedAt", "digestSnapshot"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "gate": { "enum": ["specification", "acceptance", "release"] },
     "status": { "const": "approved" },
-    "source": { "const": "human-interaction" },
+    "source": { "enum": ["human-interaction", "github-environment"] },
     "approvedBy": { "type": "string", "minLength": 1 },
+    "approvedById": { "type": "integer", "minimum": 1 },
     "approvedAt": { "type": "string", "format": "date-time" },
     "digestSnapshot": {
       "type": "object",
       "properties": {
-        "spec": { "type": ["string", "null"] },
-        "environment": { "type": ["string", "null"] },
-        "evidence": { "type": ["string", "null"] },
-        "releaseArtifact": { "type": ["string", "null"] }
-      }
+        "spec": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "environment": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "evidence": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "releaseArtifact": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "requestId": { "type": "string", "format": "uuid" },
+    "requestDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "trustPolicyDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "commitSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "verifiedAt": { "type": "string", "format": "date-time" },
+    "provider": {
+      "type": "object",
+      "required": ["name", "repository", "repositoryId", "workflowRunId", "workflowRunUrl", "workflowFile", "trustedRef", "environment", "reviewState", "reviewerLogin", "reviewerId", "reviewedAt", "requestActorLogin", "requestActorId"],
+      "properties": {
+        "name": { "const": "github-environment" },
+        "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "repositoryId": { "type": "integer", "minimum": 1 },
+        "workflowRunId": { "type": "integer", "minimum": 1 },
+        "workflowRunUrl": { "type": "string", "format": "uri" },
+        "workflowFile": { "type": "string", "minLength": 1 },
+        "trustedRef": { "type": "string", "minLength": 1 },
+        "environment": { "enum": ["h1-specification", "h2-acceptance", "h3-release"] },
+        "reviewState": { "const": "approved" },
+        "reviewerLogin": { "type": "string", "minLength": 1 },
+        "reviewerId": { "type": "integer", "minimum": 1 },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "requestActorLogin": { "type": "string", "minLength": 1 },
+        "requestActorId": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "source": { "const": "github-environment" } }, "required": ["source"] },
+      "then": {
+        "properties": {
+          "approvedById": {},
+          "requestId": {},
+          "requestDigest": {},
+          "trustPolicyDigest": {},
+          "commitSha": {},
+          "expiresAt": {},
+          "verifiedAt": {},
+          "provider": {}
+        },
+        "required": ["approvedById", "requestId", "requestDigest", "trustPolicyDigest", "commitSha", "expiresAt", "verifiedAt", "provider"]
+      }
+    },
+    {
+      "if": { "properties": { "source": { "const": "human-interaction" } }, "required": ["source"] },
+      "then": { "properties": { "gate": { "const": "specification" } } }
+    }
+  ],
   "additionalProperties": false
 }

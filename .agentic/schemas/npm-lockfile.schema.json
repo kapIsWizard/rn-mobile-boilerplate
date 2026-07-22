@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/npm-lockfile.schema.json",
+  "title": "npm lockfile",
+  "type": "object",
+  "required": ["name", "version", "lockfileVersion", "requires", "packages"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "lockfileVersion": { "type": "integer", "minimum": 3 },
+    "requires": { "const": true },
+    "packages": { "type": "object", "minProperties": 1 }
+  },
+  "additionalProperties": true
+}

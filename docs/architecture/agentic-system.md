@@ -49,7 +49,7 @@ Review the exact binary distributed through TestFlight or Google Play Internal. 
 
 Classify before fixing: product, test, fixture, build, environment, device, external service, or unknown. The same stable failure signature twice opens the circuit breaker. Iteration budgets apply independently to implementation, review, visual work, environment recovery, debugging, and release candidates.
 
-The human resumes a blocked run with an explicit reason. Agents cannot clear the circuit breaker through another tool or by editing policy files.
+The human resumes a blocked run with an explicit reason. If a budget was exhausted, resume requires a new positive bucket limit. Lifetime attempts remain immutable while a new bounded window begins at the previous total; agents cannot reset history or clear the breaker through another tool.
 
 ## Role topology
 
@@ -74,7 +74,7 @@ Every kernel event is attributed to a role and actor and appended to per-run and
 
 Any role that observes a configured forbidden signal records `agentic violation` with redacted evidence. The kernel immediately opens the circuit breaker and the monitor retains a blocking `GUARDRAIL_VIOLATION`; only a named human can resume the run after remediation.
 
-This is enforcement in the local control plane, not full production observability. Signed/product-originated approvals, OpenTelemetry export, cost budgets, device leases, and external alerts remain roadmap work.
+This is enforcement in the local control plane, not full production observability. Human approvals use a trusted-main GitHub workflow and protected environments; the adapter re-fetches policy, run, and review evidence before transitions. OpenTelemetry export, cost budgets, device leases, and external alerts remain roadmap work.
 
 ## Evidence graph
 
@@ -85,7 +85,10 @@ Each business requirement should be traceable to a scenario, implementation unit
 - MCP is interactive and may be unavailable. CI uses pinned CLIs or APIs.
 - Supabase MCP is development/test scoped and read-only by default.
 - Device artifacts may contain credentials or personal data and are ignored by git.
-- Approval files are audit records, not cryptographic identity. The product's human interaction surface must originate the decision.
+- Approval schemas and invariants are reusable source policy; `.agentic/approval-providers.json` and `.github/CODEOWNERS` form a generated, installation-specific trust binding.
+- Trust bootstrap is dry-run by default and resolves immutable repository/reviewer/app IDs from GitHub. A human applies the pair atomically; rotating an existing binding requires explicit `--rebind` authority.
+- Validation binds the committed policy to the authenticated `origin`, immutable repository ID, and exact CODEOWNERS set. An inherited or partially edited binding fails closed before a GitHub approval request.
+- Approval files are audit records, not identity by themselves. Enforced gates require exact, unexpired GitHub protected-environment evidence from an allowlisted human distinct from the requesting GitHub App, with trusted-main policy and single-use consumption.
 - Store submission, production migrations, credentials, rollout, and baseline changes are gated operations.
 - RLS/authorization, provider at-rest encryption, local secure storage, server envelope encryption, and client E2EE are separate claims with separate oracles.
 - Data-protection contracts live inside the specification digest; environment manifests carry key aliases/versions/owners only and must deny raw or production key access.
