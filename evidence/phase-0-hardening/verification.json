@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-07-21T23-15-40-015Z-phase-0-hardening",
+  "commitSha": "380f00d3b89f9e075e1346729b579258790c9cf6",
+  "generatedAt": "2026-07-22T00:42:47Z",
+  "requirements": [
+    {
+      "id": "REQ-HARD-001",
+      "status": "verified",
+      "evidence": ["scripts/agentic/kernel.test.mjs", "environment/runs/phase-0-hardening.json"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-002",
+      "status": "verified",
+      "evidence": [".agentic/schema-registry.json", "scripts/agentic/contracts.test.mjs"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-003",
+      "status": "verified",
+      "evidence": ["scripts/agentic/contracts.mjs", ".agentic/fixtures/negative", "npm run agentic:check: 29/29 tests passed"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-004",
+      "status": "partially-verified",
+      "evidence": ["package-lock.json", ".github/workflows/agentic-foundation.yml", "local npm ci passed"],
+      "reason": "Clean local npm ci passed; GitHub Actions has not run for the unpushed candidate commit."
+    },
+    {
+      "id": "REQ-HARD-005",
+      "status": "verified",
+      "evidence": ["scripts/agentic/approvals.mjs", "scripts/agentic/approvals.test.mjs"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-006",
+      "status": "partially-verified",
+      "evidence": [".github/workflows/human-gate.yml", "scripts/agentic/approvals.test.mjs", "docs/operations/github-human-gates.md"],
+      "reason": "Recorded API fixtures pass; the protected-environment canary requires operator configuration on GitHub."
+    },
+    {
+      "id": "REQ-HARD-007",
+      "status": "requires-human",
+      "evidence": [".agentic/approval-providers.json", ".github/CODEOWNERS", "docs/operations/github-human-gates.md"],
+      "reason": "The dedicated GitHub App login/ID, environment settings, and no-bypass branch protection are not configured yet."
+    },
+    {
+      "id": "REQ-HARD-008",
+      "status": "partially-verified",
+      "evidence": ["scripts/agentic/approvals.test.mjs", "scripts/agentic/approvals.mjs"],
+      "reason": "Mutation, replay, identity, rejection, expiry, trusted-policy, and outage fixtures pass; live provider behavior awaits canary."
+    },
+    {
+      "id": "REQ-HARD-009",
+      "status": "verified",
+      "evidence": ["scripts/agentic/lib.mjs", ".agentic/schemas/approval-provider-config.schema.json", "scripts/agentic/approvals.test.mjs"],
+      "reason": null
+    },
+    {
+      "id": "REQ-HARD-010",
+      "status": "verified",
+      "evidence": [".agentic/telemetry/workflow-events.jsonl", "npm run agentic:monitor: clean", "npm run agentic:audit: clean", "docs/requirements/phase-0-hardening/architecture-decisions.md"],
+      "reason": null
+    }
+  ],
+  "checks": {
+    "cleanInstall": {
+      "status": "passed",
+      "evidence": ["npm ci: exit 0"],
+      "reason": null
+    },
+    "contractAndUnitSuite": {
+      "status": "passed",
+      "evidence": ["npm run agentic:check: 29 tests passed, 0 failed"],
+      "reason": null
+    },
+    "repositoryMonitor": {
+      "status": "passed",
+      "evidence": ["npm run agentic:monitor: clean"],
+      "reason": null
+    },
+    "behaviorAudit": {
+      "status": "passed",
+      "evidence": ["npm run agentic:audit -- .agentic/runs/2026-07-21T23-15-40-015Z-phase-0-hardening: clean"],
+      "reason": null
+    },
+    "secretBoundaryScan": {
+      "status": "passed",
+      "evidence": ["changed-tree secret pattern scan found no credential material"],
+      "reason": null
+    },
+    "githubActionsRequiredCheck": {
+      "status": "requires-human",
+      "evidence": [".github/workflows/agentic-foundation.yml"],
+      "reason": "Candidate is local and intentionally was not pushed with the human SSH identity."
+    },
+    "githubProtectedEnvironmentCanary": {
+      "status": "requires-human",
+      "evidence": ["docs/operations/github-human-gates.md"],
+      "reason": "Dedicated GitHub App and h1/h2/h3 protected environments are not configured."
+    },
+    "nativeBuildsAndDevices": {
+      "status": "not-required",
+      "evidence": ["approved Phase 0 out-of-scope list"],
+      "reason": "This is the truthful control-plane profile; no mobile application exists in this run."
+    }
+  },
+  "knownGaps": [
+    "No dedicated GitHub App installation identity is configured in .agentic/approval-providers.json.",
+    "Protected environments h1-specification, h2-acceptance, and h3-release have not been operator-verified.",
+    "The candidate has not run in GitHub Actions because the agent must not push with the human SSH key.",
+    "The external H2 request, human review, independent API verification, and one-time consumption have not been exercised live."
+  ],
+  "result": "requires-human"
+}
