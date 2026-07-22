@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/environment-catalog.schema.json",
+  "title": "Environment catalog",
+  "type": "object",
+  "required": ["schemaVersion", "environments"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "environments": {
+      "type": "object",
+      "required": ["development", "e2e", "preview", "production"],
+      "properties": {
+        "development": { "$ref": "#/$defs/environment" },
+        "e2e": { "$ref": "#/$defs/environment" },
+        "preview": { "$ref": "#/$defs/environment" },
+        "production": { "$ref": "#/$defs/environment" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "environment": {
+      "type": "object",
+      "required": ["dataClass", "distribution", "productionAccess"],
+      "properties": {
+        "dataClass": { "type": "string", "minLength": 1 },
+        "distribution": { "type": "string", "minLength": 1 },
+        "productionAccess": { "type": "boolean" },
+        "requiresIsolatedBackend": { "type": "boolean" },
+        "requiresHumanGate": { "enum": ["specification", "acceptance", "release"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

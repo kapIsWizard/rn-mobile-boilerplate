@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "workflow rejects a missing preflight profile",
+  "schemaId": "https://mobilka.local/schemas/workflow.schema.json",
+  "value": {
+    "schemaVersion": 1,
+    "name": "incomplete-workflow",
+    "humanGates": [],
+    "stages": ["intake"]
+  },
+  "expected": {
+    "keyword": "required",
+    "instancePath": "/"
+  }
+}

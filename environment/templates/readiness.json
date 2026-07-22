@@ -1,5 +1,7 @@
 {
   "schemaVersion": 1,
+  "profile": "mobile-e2e",
+  "workflow": "create-app",
   "status": "blocked",
   "generatedAt": "1970-01-01T00:00:00.000Z",
   "requiredChecks": [

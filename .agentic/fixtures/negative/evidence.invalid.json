@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "evidence rejects an invented success state",
+  "schemaId": "https://mobilka.local/schemas/evidence.schema.json",
+  "value": {
+    "schemaVersion": 1,
+    "runId": "fixture",
+    "scenarioCoverage": [],
+    "checks": {},
+    "artifacts": [],
+    "result": "trust-me"
+  },
+  "expected": {
+    "keyword": "enum",
+    "instancePath": "/result"
+  }
+}

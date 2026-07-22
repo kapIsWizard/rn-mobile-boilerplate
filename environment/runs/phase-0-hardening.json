@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "profile": "control-plane",
+  "workflow": "harden-control-plane",
+  "status": "ready",
+  "generatedAt": "2026-07-21T23:33:05Z",
+  "requiredChecks": [
+    "node",
+    "packageManager",
+    "repository",
+    "baseline",
+    "ciPolicy",
+    "approvalProviderTarget",
+    "productionBoundary"
+  ],
+  "checks": {
+    "node": {
+      "status": "ready",
+      "version": "v24.12.0",
+      "evidence": ["node --version"],
+      "reason": null
+    },
+    "packageManager": {
+      "status": "ready",
+      "version": "npm 11.6.2",
+      "evidence": ["npm --version", "package.json engines.node >=22"],
+      "reason": null
+    },
+    "repository": {
+      "status": "ready",
+      "version": "git 2.50.1",
+      "evidence": ["origin git@github.com:kapIsWizard/rn-mobile-boilerplate.git", "branch codex/phase-0-hardening-spec"],
+      "reason": null
+    },
+    "baseline": {
+      "status": "ready",
+      "version": "13 tests",
+      "evidence": ["npm run agentic:check", "npm run agentic:monitor", "phase-0 H1 digest f7f5583795f96962f6beb44da7cfa6a48bb69afd7faedd6e092a59bc575848e8"],
+      "reason": null
+    },
+    "ciPolicy": {
+      "status": "ready",
+      "version": "agentic-foundation-v1",
+      "evidence": [".github/workflows/agentic-foundation.yml", "workflow permissions contents:read"],
+      "reason": null
+    },
+    "approvalProviderTarget": {
+      "status": "ready",
+      "version": "github-environment-v1-proposed",
+      "evidence": ["docs/requirements/phase-0-hardening/architecture-decisions.md#adr-hard-003--github-protected-environments-for-h1h2h3", "human reviewer kapIsWizard; separate agent GitHub App required before H2"],
+      "reason": "Architecture and ownership metadata are ready for implementation; live environment, GitHub App, and canary are H2 exit evidence, not pre-existing implementation inputs."
+    },
+    "productionBoundary": {
+      "status": "ready",
+      "version": "non-production-only",
+      "evidence": ["No production credentials required", "No mobile, backend, device, store, or customer-data access required"],
+      "reason": null
+    }
+  },
+  "secretBoundary": {
+    "valuesRecorded": false,
+    "productionAccess": false,
+    "inventory": [
+      {
+        "name": "future GitHub App installation credential",
+        "classification": "server-only-secret",
+        "owner": "repository operator",
+        "storage": "GitHub environment or approved local secret store; not provisioned or required for local implementation"
+      }
+    ]
+  },
+  "keyBoundary": {
+    "valuesRecorded": false,
+    "productionKeyAccess": false,
+    "inventory": []
+  },
+  "blockers": []
+}

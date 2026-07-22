@@ -16,11 +16,12 @@
 - [x] Data-protection architect skill, key-metadata-only preflight, crypto evidence dimension, and key-rotation workflow
 - [x] Repository monitor for duplicate objectives, stale work, and evidence-free retries
 - [x] Role-separated specification, build, debug, device, verify, review, documentation, release, orchestration, and audit skills
-- [ ] Signed or product-originated approval adapter
-- [ ] Full JSON Schema validation in CI
-- [ ] OpenTelemetry exporter
+- [x] GitHub protected-environment approval adapter with trusted-main policy, replay protection, and fail-closed verification
+- [x] Full strict Draft 2020-12 JSON Schema validation and ownership in CI
+- [ ] Operator setup and non-production protected-environment canary for Phase 0 H2
+- [ ] OpenTelemetry exporter (deliberately deferred to Phase 2)
 
-Exit: state transitions, invalidation, loop breaking, and audit pass automated tests.
+Exit: automated checks, monitor, and audit pass; the protected-environment canary proves distinct App/human identities; H2 accepts the exact evidence digest. No H3 or production authority is implied.
 
 ## Phase 1 — reusable authentication boilerplate
 

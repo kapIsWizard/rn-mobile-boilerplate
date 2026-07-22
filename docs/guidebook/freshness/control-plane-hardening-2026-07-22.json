@@ -4,7 +4,7 @@
   "records": [
     {
       "question": "How should this Node control plane validate Draft 2020-12 JSON Schemas?",
-      "installedVersion": null,
+      "installedVersion": "ajv@8.20.0; ajv-formats@3.0.1",
       "applicableRange": "Ajv 8.20.0 and ajv-formats 3.0.1 checked 2026-07-22",
       "conclusion": "Pin Ajv and ajv-formats, use Ajv's dedicated Draft 2020-12 class in strict mode, compile the complete offline registry, and validate artifacts plus focused negative fixtures in CI.",
       "sources": [
@@ -20,12 +20,13 @@
     {
       "question": "Can GitHub protected environments provide credible human gate evidence?",
       "installedVersion": null,
-      "applicableRange": "GitHub Actions environments and workflow-run REST API checked 2026-07-22",
+      "applicableRange": "GitHub Actions environments and workflow-run REST API version 2026-03-10 checked 2026-07-22",
       "conclusion": "Yes, when required reviewers, prevent self-review, disabled admin bypass, distinct requester/reviewer identities, a trusted default-branch workflow, immutable request inputs, and independent review-history verification are all enforced. Environment approval alone does not bind the repository's digest contract.",
       "sources": [
         "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments",
         "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments",
-        "https://docs.github.com/en/rest/actions/workflow-runs"
+        "https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2026-03-10",
+        "https://docs.github.com/en/rest/actions/workflows?apiVersion=2026-03-10"
       ],
       "stability": "provider-current",
       "contradiction": "A local claimed reviewer name, issue comment, or same-identity approval is not equivalent to protected-environment evidence.",

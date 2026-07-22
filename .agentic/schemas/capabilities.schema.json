@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/capabilities.schema.json",
+  "title": "Capability routing catalog",
+  "type": "object",
+  "required": ["schemaVersion", "capabilities"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "capabilities": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["permission"],
+        "properties": {
+          "interactive": { "type": "string", "minLength": 1 },
+          "ci": { "type": "string", "minLength": 1 },
+          "fallback": { "type": "string", "minLength": 1 },
+          "permission": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

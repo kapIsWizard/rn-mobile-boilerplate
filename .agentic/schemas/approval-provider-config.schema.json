@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/approval-provider-config.schema.json",
+  "title": "Approval provider trust configuration",
+  "type": "object",
+  "required": ["schemaVersion", "mode", "manual", "github"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "mode": { "enum": ["bootstrap", "enforced"] },
+    "manual": {
+      "type": "object",
+      "required": ["enabled", "allowedGates", "bootstrapRunIds"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "allowedGates": { "type": "array", "items": { "const": "specification" }, "uniqueItems": true },
+        "bootstrapRunIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "additionalProperties": false
+    },
+    "github": {
+      "type": "object",
+      "required": ["enabled", "apiBaseUrl", "apiVersion", "tokenEnv", "repository", "repositoryId", "workflowFile", "trustedRef", "environments", "reviewers", "preventSelfReview", "allowAdminBypass", "agentIdentity"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "apiBaseUrl": { "const": "https://api.github.com" },
+        "apiVersion": { "const": "2026-03-10" },
+        "tokenEnv": { "const": "GITHUB_APP_INSTALLATION_TOKEN" },
+        "repository": { "const": "kapIsWizard/rn-mobile-boilerplate" },
+        "repositoryId": { "const": 1308181084 },
+        "workflowFile": { "const": "human-gate.yml" },
+        "trustedRef": { "const": "refs/heads/main" },
+        "environments": {
+          "type": "object",
+          "required": ["specification", "acceptance", "release"],
+          "properties": {
+            "specification": { "const": "h1-specification" },
+            "acceptance": { "const": "h2-acceptance" },
+            "release": { "const": "h3-release" }
+          },
+          "additionalProperties": false
+        },
+        "reviewers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["login", "id", "type"],
+            "properties": {
+              "login": { "const": "kapIsWizard" },
+              "id": { "const": 96981818 },
+              "type": { "const": "User" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "preventSelfReview": { "const": true },
+        "allowAdminBypass": { "const": false },
+        "agentIdentity": {
+          "type": "object",
+          "required": ["kind", "login", "id"],
+          "properties": {
+            "kind": { "const": "GitHubApp" },
+            "login": { "type": ["string", "null"] },
+            "id": { "type": ["integer", "null"], "minimum": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "enforced" } }, "required": ["mode"] },
+      "then": {
+        "properties": {
+          "manual": {
+            "type": "object",
+            "properties": {
+              "enabled": { "const": false },
+              "allowedGates": { "type": "array", "maxItems": 0 },
+              "bootstrapRunIds": { "type": "array", "maxItems": 0 }
+            }
+          },
+          "github": {
+            "type": "object",
+            "properties": {
+              "enabled": { "const": true },
+              "agentIdentity": {
+                "type": "object",
+                "properties": {
+                  "login": { "type": "string", "minLength": 1 },
+                  "id": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

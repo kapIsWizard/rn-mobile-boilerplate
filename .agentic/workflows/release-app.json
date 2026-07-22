@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "release-app",
+  "preflightProfile": "mobile-release",
   "humanGates": ["specification", "acceptance", "release"],
   "stages": ["release-scope", "risk-and-policy", "human-specification", "environment-credential-and-key-metadata-preflight", "crypto-format-and-migration-readiness", "export-compliance", "freeze-and-manifest", "native-builds", "store-internal-distribution", "agent-device-release-suite", "operator-checklist", "human-acceptance", "release-candidate", "final-qa", "human-release-approval", "staged-rollout", "observe", "rollback-or-complete"]
 }

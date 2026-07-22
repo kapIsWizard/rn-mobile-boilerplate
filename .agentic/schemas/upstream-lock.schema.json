@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/upstream-lock.schema.json",
+  "title": "Pinned upstream repository lock",
+  "type": "object",
+  "required": ["repository", "branch", "commit", "inspectedAt", "strategy", "status", "blockedPatterns"],
+  "properties": {
+    "repository": { "type": "string", "format": "uri" },
+    "branch": { "type": "string", "minLength": 1 },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "inspectedAt": { "type": "string", "format": "date" },
+    "strategy": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 },
+    "blockedPatterns": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": false
+}

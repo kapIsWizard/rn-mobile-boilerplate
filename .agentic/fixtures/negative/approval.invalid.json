@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "name": "manual approval cannot authorize release",
+  "schemaId": "https://mobilka.local/schemas/approval.schema.json",
+  "value": {
+    "schemaVersion": 1,
+    "gate": "release",
+    "status": "approved",
+    "source": "human-interaction",
+    "approvedBy": "claimed-human",
+    "approvedAt": "2026-07-22T00:00:00Z",
+    "digestSnapshot": {
+      "spec": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "environment": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "evidence": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "releaseArtifact": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    }
+  },
+  "expected": {
+    "keyword": "const",
+    "instancePath": "/gate"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/approval-consumption.schema.json",
+  "title": "Single-use approval request consumption",
+  "type": "object",
+  "required": ["schemaVersion", "requestId", "requestDigest", "runId", "gate", "revision", "consumedAt", "transition"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "requestId": { "type": "string", "format": "uuid" },
+    "requestDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "runId": { "type": "string", "minLength": 1 },
+    "gate": { "enum": ["specification", "acceptance", "release"] },
+    "revision": { "type": "integer", "minimum": 1 },
+    "consumedAt": { "type": "string", "format": "date-time" },
+    "transition": { "type": "string", "pattern": "^[A-Z_]+->[A-Z_]+$" }
+  },
+  "additionalProperties": false
+}

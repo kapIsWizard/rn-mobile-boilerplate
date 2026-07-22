@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "run state rejects a missing identity",
+  "schemaId": "https://mobilka.local/schemas/run-state.schema.json",
+  "value": {
+    "schemaVersion": 1
+  },
+  "expected": {
+    "keyword": "required",
+    "instancePath": "/"
+  }
+}

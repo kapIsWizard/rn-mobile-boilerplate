@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/agentic-config.schema.json",
+  "title": "Agentic kernel configuration",
+  "type": "object",
+  "required": ["schemaVersion", "defaultRisk", "runRoot", "telemetryRoot", "skillsRoot", "maxRepeatedFailureSignature", "monitoring", "iterationLimits", "humanGates"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "defaultRisk": { "enum": ["fast", "standard", "critical"] },
+    "runRoot": { "type": "string", "minLength": 1 },
+    "telemetryRoot": { "type": "string", "minLength": 1 },
+    "skillsRoot": { "type": "string", "minLength": 1 },
+    "maxRepeatedFailureSignature": { "type": "integer", "minimum": 2 },
+    "monitoring": {
+      "type": "object",
+      "required": ["maxSilentMinutes", "maxActiveRunsPerObjective"],
+      "properties": {
+        "maxSilentMinutes": { "type": "integer", "minimum": 1 },
+        "maxActiveRunsPerObjective": { "const": 1 }
+      },
+      "additionalProperties": false
+    },
+    "iterationLimits": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "humanGates": {
+      "type": "array",
+      "const": ["specification", "acceptance", "release"]
+    }
+  },
+  "additionalProperties": false
+}

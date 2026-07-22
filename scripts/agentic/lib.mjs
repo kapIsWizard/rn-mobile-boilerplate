@@ -1,6 +1,19 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createContractValidator } from './contracts.mjs';
+
+const SCHEMAS = {
+  config: 'https://mobilka.local/schemas/agentic-config.schema.json',
+  stateMachine: 'https://mobilka.local/schemas/state-machine.schema.json',
+  guardrails: 'https://mobilka.local/schemas/guardrails.schema.json',
+  approvalProviders: 'https://mobilka.local/schemas/approval-provider-config.schema.json',
+  approval: 'https://mobilka.local/schemas/approval.schema.json',
+  workflow: 'https://mobilka.local/schemas/workflow.schema.json',
+  runState: 'https://mobilka.local/schemas/run-state.schema.json',
+  workflowEvent: 'https://mobilka.local/schemas/workflow-event.schema.json',
+  environment: 'https://mobilka.local/schemas/environment-readiness.schema.json'
+};
 
 export async function loadJson(filePath) {
   return JSON.parse(await readFile(filePath, 'utf8'));
@@ -8,12 +21,26 @@ export async function loadJson(filePath) {
 
 export async function loadKernel(root = process.cwd()) {
   const agenticRoot = path.join(root, '.agentic');
-  const [config, stateMachine, guardrails] = await Promise.all([
+  const contracts = await createContractValidator(root);
+  const [config, stateMachine, guardrails, approvalProviders] = await Promise.all([
     loadJson(path.join(agenticRoot, 'config.json')),
     loadJson(path.join(agenticRoot, 'policies/state-machine.json')),
-    loadJson(path.join(agenticRoot, 'policies/guardrails.json'))
+    loadJson(path.join(agenticRoot, 'policies/guardrails.json')),
+    loadJson(path.join(agenticRoot, 'approval-providers.json'))
   ]);
-  return { root, agenticRoot, config, stateMachine, guardrails };
+  contracts.assertValue(SCHEMAS.config, config, '.agentic/config.json');
+  contracts.assertValue(SCHEMAS.stateMachine, stateMachine, '.agentic/policies/state-machine.json');
+  contracts.assertValue(SCHEMAS.guardrails, guardrails, '.agentic/policies/guardrails.json');
+  contracts.assertValue(SCHEMAS.approvalProviders, approvalProviders, '.agentic/approval-providers.json');
+  return { root, agenticRoot, config, stateMachine, guardrails, approvalProviders, contracts };
+}
+
+export async function loadWorkflow(kernel, workflow) {
+  const relative = `.agentic/workflows/${workflow}.json`;
+  const definition = await loadJson(path.join(kernel.root, relative));
+  kernel.contracts.assertValue(SCHEMAS.workflow, definition, relative);
+  if (definition.name !== workflow) throw new Error(`Workflow name mismatch: ${workflow}`);
+  return definition;
 }
 
 function canonical(value) {
@@ -79,8 +106,7 @@ function slug(value) {
 
 export async function initRun(kernel, { name, risk = kernel.config.defaultRisk, workflow = 'develop-feature' }) {
   if (!['fast', 'standard', 'critical'].includes(risk)) throw new Error(`Unsupported risk profile: ${risk}`);
-  const workflowDefinition = await loadJson(path.join(kernel.agenticRoot, 'workflows', `${workflow}.json`));
-  if (workflowDefinition.name !== workflow) throw new Error(`Workflow name mismatch: ${workflow}`);
+  await loadWorkflow(kernel, workflow);
   const id = `${timestamp().replace(/[:.]/g, '-')}-${slug(name)}`;
   const runDir = path.resolve(kernel.root, kernel.config.runRoot, id);
   const state = {
@@ -97,24 +123,60 @@ export async function initRun(kernel, { name, risk = kernel.config.defaultRisk, 
     digestSources: { spec: null, environment: null, evidence: null, releaseArtifact: null },
     approvals: { specification: null, acceptance: null, release: null },
     attempts: Object.fromEntries(Object.keys(kernel.config.iterationLimits).map((key) => [key, 0])),
+    attemptWindows: Object.fromEntries(Object.entries(kernel.config.iterationLimits).map(([key, limit]) => [key, {
+      baseline: 0,
+      limit,
+      grantedBy: null,
+      grantedAt: null,
+      reason: null
+    }])),
     failures: [],
     circuitBreaker: { open: false, reason: null }
   };
+  kernel.contracts.assertValue(SCHEMAS.runState, state, `${path.relative(kernel.root, runDir)}/state.json`);
   await writeJsonAtomic(path.join(runDir, 'state.json'), state);
   await recordEvent(kernel, runDir, { type: 'run-created', role: 'orchestrator', data: { name, risk, workflow } });
   return { runDir, state };
 }
 
-export async function readRun(runDir) {
+function ensureAttemptWindows(kernel, state) {
+  state.attempts ||= {};
+  state.attemptWindows ||= {};
+  for (const [bucket, limit] of Object.entries(kernel.config.iterationLimits)) {
+    if (!Object.hasOwn(state.attempts, bucket)) state.attempts[bucket] = 0;
+    state.attemptWindows[bucket] ||= {
+      baseline: 0,
+      limit,
+      grantedBy: null,
+      grantedAt: null,
+      reason: null
+    };
+  }
+  return state.attemptWindows;
+}
+
+function attemptWindowUsage(kernel, state, bucket) {
+  const windows = ensureAttemptWindows(kernel, state);
+  const window = windows[bucket];
+  return { window, used: state.attempts[bucket] - window.baseline };
+}
+
+export async function readRun(runDir, kernel = null) {
   const state = await loadJson(path.join(path.resolve(runDir), 'state.json'));
   state.digests.environment ??= null;
   state.digestSources ||= { spec: null, environment: null, evidence: null, releaseArtifact: null };
   state.digestSources.environment ??= null;
+  if (kernel) {
+    ensureAttemptWindows(kernel, state);
+    kernel.contracts.assertValue(SCHEMAS.runState, state, `${path.relative(kernel.root, path.resolve(runDir))}/state.json`);
+  }
   return state;
 }
 
-async function saveRun(runDir, state) {
+async function saveRun(kernel, runDir, state) {
   state.updatedAt = timestamp();
+  ensureAttemptWindows(kernel, state);
+  kernel.contracts.assertValue(SCHEMAS.runState, state, `${path.relative(kernel.root, path.resolve(runDir))}/state.json`);
   await writeJsonAtomic(path.join(path.resolve(runDir), 'state.json'), state);
 }
 
@@ -126,11 +188,12 @@ export async function recordEvent(kernel, runDir, event) {
     ...event,
     actor: event.actor || event.role
   };
+  kernel.contracts.assertValue(SCHEMAS.workflowEvent, fullEvent, `${path.relative(kernel.root, path.resolve(runDir))}/events.jsonl`);
   await appendJsonLine(path.join(runDir, 'events.jsonl'), fullEvent);
   await appendJsonLine(path.resolve(kernel.root, kernel.config.telemetryRoot, 'workflow-events.jsonl'), fullEvent);
 }
 
-function approvalSnapshot(state, gate) {
+export function approvalSnapshot(state, gate) {
   if (gate === 'specification') return { spec: state.digests.spec };
   if (gate === 'acceptance') return { spec: state.digests.spec, environment: state.digests.environment, evidence: state.digests.evidence };
   if (gate === 'release') return { spec: state.digests.spec, environment: state.digests.environment, evidence: state.digests.evidence, releaseArtifact: state.digests.releaseArtifact };
@@ -142,9 +205,24 @@ export function isApprovalValid(state, gate) {
   return Boolean(approval && approval.status === 'approved' && digestValue(approval.digestSnapshot) === digestValue(approvalSnapshot(state, gate)));
 }
 
+async function assertApprovalForTransition(kernel, runDir, state, gate) {
+  if (!isApprovalValid(state, gate)) throw new Error(`Current state requires valid ${gate} approval`);
+  const approval = state.approvals[gate];
+  if (approval.source === 'human-interaction') {
+    const manual = kernel.approvalProviders.manual;
+    if (gate !== 'specification' || !manual.enabled || !manual.allowedGates.includes(gate) || !manual.bootstrapRunIds.includes(state.id)) {
+      throw new Error('Manual approval adapter is unenforced and cannot authorize this transition');
+    }
+    return approval;
+  }
+  if (approval.source !== 'github-environment') throw new Error(`Unsupported approval source: ${approval.source}`);
+  const { reverifyRecordedApproval } = await import('./approvals.mjs');
+  return reverifyRecordedApproval(kernel, runDir, approval, kernel.approvalRuntime || {});
+}
+
 export async function setRunDigest(kernel, runDir, kind, target) {
   if (!Object.hasOwn({ spec: true, environment: true, evidence: true, releaseArtifact: true }, kind)) throw new Error(`Unknown digest kind: ${kind}`);
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
   const source = path.resolve(target);
   const digest = await digestPath(source);
   state.digestSources ||= { spec: null, environment: null, evidence: null, releaseArtifact: null };
@@ -162,7 +240,7 @@ export async function setRunDigest(kernel, runDir, kind, target) {
     }
     if (kind === 'releaseArtifact') state.approvals.release = null;
   }
-  await saveRun(runDir, state);
+  await saveRun(kernel, runDir, state);
   await recordEvent(kernel, runDir, { type: 'digest-updated', role: 'orchestrator', data: { kind, digest, target: source } });
   return digest;
 }
@@ -196,7 +274,12 @@ async function assertArtifactDigestsCurrent(state) {
 export async function approveRun(kernel, runDir, gate, approvedBy) {
   if (!kernel.config.humanGates.includes(gate)) throw new Error(`Unknown human gate: ${gate}`);
   if (!approvedBy) throw new Error('Human approver identity is required');
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
+  const manual = kernel.approvalProviders.manual;
+  const allowedBootstrapRun = manual.bootstrapRunIds.includes(state.id);
+  if (!manual.enabled || gate !== 'specification' || !manual.allowedGates.includes(gate) || !allowedBootstrapRun) {
+    throw new Error('Manual approval adapter is unenforced and development-only; it is limited to the allowlisted bootstrap specification gate');
+  }
   await assertArtifactDigestsCurrent(state);
   const snapshot = approvalSnapshot(state, gate);
   if (Object.values(snapshot).some((value) => !value)) throw new Error(`Gate ${gate} has missing artifact digests`);
@@ -209,11 +292,63 @@ export async function approveRun(kernel, runDir, gate, approvedBy) {
     approvedAt: timestamp(),
     digestSnapshot: snapshot
   };
+  kernel.contracts.assertValue(SCHEMAS.approval, approval, `${path.relative(kernel.root, path.resolve(runDir))}/approvals/${gate}.json`);
   state.approvals[gate] = approval;
-  await saveRun(runDir, state);
+  await saveRun(kernel, runDir, state);
   await writeJsonAtomic(path.join(runDir, 'approvals', `${gate}.json`), approval);
   await recordEvent(kernel, runDir, { type: 'human-approval-recorded', role: 'human', actor: approvedBy, data: { gate, approvedBy } });
   return approval;
+}
+
+export async function recordExternalApproval(kernel, runDir, approval) {
+  if (approval?.source !== 'github-environment') throw new Error('Only externally verified GitHub approval may use the enforced approval path');
+  const state = await readRun(runDir, kernel);
+  await assertArtifactDigestsCurrent(state);
+  const expected = approvalSnapshot(state, approval.gate);
+  if (digestValue(expected) !== digestValue(approval.digestSnapshot)) throw new Error('External approval digest snapshot does not match current run state');
+  kernel.contracts.assertValue(SCHEMAS.approval, approval, `${path.relative(kernel.root, path.resolve(runDir))}/approvals/${approval.gate}.json`);
+  state.approvals[approval.gate] = approval;
+  await saveRun(kernel, runDir, state);
+  await writeJsonAtomic(path.join(runDir, 'approvals', `${approval.gate}.json`), approval);
+  await recordEvent(kernel, runDir, {
+    type: 'external-approval-verified',
+    role: 'approval-verifier',
+    actor: 'github-environment-adapter',
+    data: { gate: approval.gate, requestId: approval.requestId, workflowRunId: approval.provider.workflowRunId, reviewerId: approval.approvedById }
+  });
+  return approval;
+}
+
+export async function migrateRunWorkflow(kernel, runDir, workflow, actor = 'orchestrator') {
+  const state = await readRun(runDir, kernel);
+  if (state.workflow === workflow) return state;
+  await assertArtifactDigestsCurrent(state);
+  await assertApprovalForTransition(kernel, runDir, state, 'specification');
+  const definition = await loadWorkflow(kernel, workflow);
+  const specSource = state.digestSources.spec;
+  const specInfo = await stat(specSource);
+  const specificationFile = specInfo.isDirectory() ? path.join(specSource, 'specification.md') : specSource;
+  const specification = await readFile(specificationFile, 'utf8');
+  if (!specification.includes(`Proposed workflow: \`${workflow}\``)) {
+    throw new Error(`Approved specification does not authorize workflow ${workflow}`);
+  }
+  if (state.digests.environment) {
+    const manifest = await loadJson(state.digestSources.environment);
+    kernel.contracts.assertValue(SCHEMAS.environment, manifest, state.digestSources.environment);
+    if (manifest.workflow !== workflow || manifest.profile !== definition.preflightProfile) {
+      throw new Error(`Existing environment manifest does not authorize workflow ${workflow}`);
+    }
+  }
+  const from = state.workflow;
+  state.workflow = workflow;
+  await saveRun(kernel, runDir, state);
+  await recordEvent(kernel, runDir, {
+    type: 'run-workflow-migrated',
+    role: 'orchestrator',
+    actor,
+    data: { from, to: workflow, specificationDigest: state.digests.spec }
+  });
+  return state;
 }
 
 function transitionRule(machine, from, to) {
@@ -229,17 +364,23 @@ function requiredGateForState(stateName) {
 
 export async function transitionRun(kernel, runDir, to, role = 'orchestrator', actor = role) {
   if (role !== 'orchestrator') throw new Error('Only the orchestrator may transition run state');
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
   if (state.circuitBreaker.open) throw new Error(`Circuit breaker is open: ${state.circuitBreaker.reason}`);
   await assertArtifactDigestsCurrent(state);
   const activeGate = requiredGateForState(state.state);
-  if (activeGate && !isApprovalValid(state, activeGate)) throw new Error(`Current state requires valid ${activeGate} approval`);
+  const verifiedGates = new Map();
+  if (activeGate) verifiedGates.set(activeGate, await assertApprovalForTransition(kernel, runDir, state, activeGate));
   const rule = transitionRule(kernel.stateMachine, state.state, to);
   if (!rule) throw new Error(`Invalid transition: ${state.state} -> ${to}`);
   if (rule.requiresDigest && !state.digests[rule.requiresDigest]) throw new Error(`Transition requires ${rule.requiresDigest} digest`);
   if (rule.requiresReadyEnvironment) {
     const source = state.digestSources.environment;
     const manifest = await loadJson(source);
+    kernel.contracts.assertValue(SCHEMAS.environment, manifest, source);
+    const workflow = await loadWorkflow(kernel, state.workflow);
+    if (manifest.profile !== workflow.preflightProfile || manifest.workflow !== state.workflow) {
+      throw new Error(`Environment preflight mismatch: workflow ${state.workflow} requires profile ${workflow.preflightProfile}`);
+    }
     const requiredChecks = manifest.requiredChecks || [];
     const missingOrBlocked = requiredChecks.filter((id) => manifest.checks?.[id]?.status !== 'ready');
     if (manifest.status !== 'ready' || manifest.blockers?.length || missingOrBlocked.length) {
@@ -252,7 +393,16 @@ export async function transitionRun(kernel, runDir, to, role = 'orchestrator', a
       throw new Error('Environment manifest violates the cryptographic key boundary');
     }
   }
-  if (rule.requiresApproval && !isApprovalValid(state, rule.requiresApproval)) throw new Error(`Transition requires valid ${rule.requiresApproval} approval`);
+  if (rule.requiresApproval) {
+    if (!verifiedGates.has(rule.requiresApproval)) {
+      verifiedGates.set(rule.requiresApproval, await assertApprovalForTransition(kernel, runDir, state, rule.requiresApproval));
+    }
+    const approval = verifiedGates.get(rule.requiresApproval);
+    if (approval.source === 'github-environment') {
+      const { consumeApprovalRequest } = await import('./approvals.mjs');
+      await consumeApprovalRequest(kernel, runDir, approval, `${state.state}->${to}`, kernel.approvalRuntime?.now);
+    }
+  }
   const from = state.state;
   state.state = to;
   if (rule.createsRevision) {
@@ -263,7 +413,7 @@ export async function transitionRun(kernel, runDir, to, role = 'orchestrator', a
     }
     for (const approval of rule.invalidateApprovals || []) state.approvals[approval] = null;
   }
-  await saveRun(runDir, state);
+  await saveRun(kernel, runDir, state);
   await recordEvent(kernel, runDir, { type: 'state-transition', role, actor, data: { from, to, revision: state.revision } });
   return state;
 }
@@ -276,12 +426,13 @@ function attemptBucket(failureClass) {
 export async function recordFailure(kernel, runDir, { failureClass, signature, evidence = [], role = 'verifier', actor = role }) {
   if (!kernel.guardrails.failureClasses.includes(failureClass)) throw new Error(`Unknown failure class: ${failureClass}`);
   if (!signature) throw new Error('Failure signature is required');
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
   const bucket = attemptBucket(failureClass);
   state.attempts[bucket] += 1;
   state.failures.push({ at: timestamp(), failureClass, signature, evidence, role });
   const repeated = state.failures.filter((failure) => failure.signature === signature).length;
-  const overBudget = state.attempts[bucket] > kernel.config.iterationLimits[bucket];
+  const { window, used } = attemptWindowUsage(kernel, state, bucket);
+  const overBudget = used > window.limit;
   const repeatedFailure = repeated >= kernel.config.maxRepeatedFailureSignature;
   if (overBudget || repeatedFailure) {
     state.circuitBreaker = {
@@ -291,27 +442,27 @@ export async function recordFailure(kernel, runDir, { failureClass, signature, e
     state.blockedFrom = state.state;
     state.state = 'BLOCKED';
   }
-  await saveRun(runDir, state);
-  await recordEvent(kernel, runDir, { type: 'failure-recorded', role, actor, data: { failureClass, signature, evidence, repeated, circuitOpen: state.circuitBreaker.open } });
+  await saveRun(kernel, runDir, state);
+  await recordEvent(kernel, runDir, { type: 'failure-recorded', role, actor, data: { failureClass, signature, evidence, repeated, attempt: used, limit: window.limit, circuitOpen: state.circuitBreaker.open } });
   return state;
 }
 
 export async function recordAttempt(kernel, runDir, { bucket, role, evidence = [], actor = role }) {
   if (!Object.hasOwn(kernel.config.iterationLimits, bucket)) throw new Error(`Unknown attempt bucket: ${bucket}`);
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
   state.attempts[bucket] += 1;
-  const limit = kernel.config.iterationLimits[bucket];
-  if (state.attempts[bucket] > limit) {
+  const { window, used } = attemptWindowUsage(kernel, state, bucket);
+  if (used > window.limit) {
     state.circuitBreaker = { open: true, reason: `${bucket} iteration budget exhausted` };
     state.blockedFrom = state.state;
     state.state = 'BLOCKED';
   }
-  await saveRun(runDir, state);
+  await saveRun(kernel, runDir, state);
   await recordEvent(kernel, runDir, {
     type: 'attempt-recorded',
     role,
     actor,
-    data: { bucket, attempt: state.attempts[bucket], limit, evidence, circuitOpen: state.circuitBreaker.open }
+    data: { bucket, attempt: used, lifetimeAttempt: state.attempts[bucket], limit: window.limit, evidence, circuitOpen: state.circuitBreaker.open }
   });
   return state;
 }
@@ -320,11 +471,11 @@ export async function recordGuardrailViolation(kernel, runDir, { signal, role, e
   if (!kernel.guardrails.forbiddenSignals.includes(signal)) throw new Error(`Unknown forbidden signal: ${signal}`);
   if (!role) throw new Error('Reporting role is required');
   if (!evidence.length) throw new Error('Guardrail violation evidence is required');
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
   if (state.state !== 'BLOCKED') state.blockedFrom = state.state;
   state.state = 'BLOCKED';
   state.circuitBreaker = { open: true, reason: `guardrail violation: ${signal}` };
-  await saveRun(runDir, state);
+  await saveRun(kernel, runDir, state);
   await recordEvent(kernel, runDir, {
     type: 'guardrail-violation',
     role,
@@ -334,24 +485,48 @@ export async function recordGuardrailViolation(kernel, runDir, { signal, role, e
   return state;
 }
 
-export async function resumeRun(kernel, runDir, { approvedBy, reason }) {
-  const state = await readRun(runDir);
+export async function resumeRun(kernel, runDir, { approvedBy, reason, budgetBucket = null, budgetLimit = null }) {
+  const state = await readRun(runDir, kernel);
   if (state.state !== 'BLOCKED' || !state.circuitBreaker.open) throw new Error('Run is not blocked');
   if (!approvedBy || !reason) throw new Error('Human identity and resume reason are required');
+  ensureAttemptWindows(kernel, state);
+  const exhausted = state.circuitBreaker.reason?.match(/^([A-Za-z0-9]+) iteration budget exhausted$/);
+  if (exhausted) {
+    const exhaustedBucket = exhausted[1];
+    if (budgetBucket !== exhaustedBucket || !Number.isInteger(budgetLimit) || budgetLimit <= 0) {
+      throw new Error(`Resuming exhausted ${exhaustedBucket} budget requires an explicit positive --budget ${exhaustedBucket} --limit <n> human grant`);
+    }
+  }
+  let budgetGrant = null;
+  if (budgetBucket !== null || budgetLimit !== null) {
+    if (!Object.hasOwn(kernel.config.iterationLimits, budgetBucket)) throw new Error(`Unknown budget bucket: ${budgetBucket}`);
+    if (!Number.isInteger(budgetLimit) || budgetLimit <= 0) throw new Error('Human-granted budget limit must be a positive integer');
+    const grantedAt = timestamp();
+    state.attemptWindows[budgetBucket] = {
+      baseline: state.attempts[budgetBucket],
+      limit: budgetLimit,
+      grantedBy: approvedBy,
+      grantedAt,
+      reason
+    };
+    budgetGrant = { bucket: budgetBucket, limit: budgetLimit, baseline: state.attempts[budgetBucket], grantedBy: approvedBy, grantedAt };
+  }
   state.state = state.blockedFrom || kernel.stateMachine.initialState;
   delete state.blockedFrom;
   state.circuitBreaker = { open: false, reason: null };
-  await saveRun(runDir, state);
-  await recordEvent(kernel, runDir, { type: 'human-resume', role: 'human', actor: approvedBy, data: { approvedBy, reason } });
+  await saveRun(kernel, runDir, state);
+  await recordEvent(kernel, runDir, { type: 'human-resume', role: 'human', actor: approvedBy, data: { approvedBy, reason, budgetGrant } });
   return state;
 }
 
 export function auditState(kernel, state) {
   const findings = [];
+  ensureAttemptWindows(kernel, state);
   if (state.circuitBreaker.open && state.state !== 'BLOCKED') findings.push({ severity: 'P1', code: 'CIRCUIT_STATE_MISMATCH' });
   for (const [bucket, value] of Object.entries(state.attempts)) {
-    const limit = kernel.config.iterationLimits[bucket];
-    if (limit !== undefined && value > limit) findings.push({ severity: 'P1', code: 'ITERATION_BUDGET_EXCEEDED', bucket, value, limit });
+    const window = state.attemptWindows[bucket];
+    const used = value - window.baseline;
+    if (used > window.limit) findings.push({ severity: 'P1', code: 'ITERATION_BUDGET_EXCEEDED', bucket, value: used, lifetimeValue: value, limit: window.limit });
   }
   for (const gate of kernel.config.humanGates) {
     if (state.approvals[gate] && !isApprovalValid(state, gate)) findings.push({ severity: 'P1', code: 'STALE_APPROVAL', gate });
@@ -372,7 +547,7 @@ async function readJsonLines(filePath) {
 }
 
 export async function auditRun(kernel, runDir) {
-  const state = await readRun(runDir);
+  const state = await readRun(runDir, kernel);
   const stateReport = auditState(kernel, state);
   const findings = [...stateReport.findings, ...await artifactDigestFindings(state)];
   const events = await readJsonLines(path.join(path.resolve(runDir), 'events.jsonl'));
@@ -413,7 +588,7 @@ export async function monitorRuns(kernel, now = Date.now()) {
   const reports = [];
   for (const entry of entries.filter((candidate) => candidate.isDirectory()).sort((left, right) => left.name.localeCompare(right.name))) {
     const runDir = path.join(runRoot, entry.name);
-    const state = await readRun(runDir);
+    const state = await readRun(runDir, kernel);
     const report = await auditRun(kernel, runDir);
     reports.push({ runDir, state, report });
   }

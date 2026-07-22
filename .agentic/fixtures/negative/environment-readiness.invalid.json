@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "name": "environment rejects recorded secret values",
+  "schemaId": "https://mobilka.local/schemas/environment-readiness.schema.json",
+  "value": {
+    "schemaVersion": 1,
+    "profile": "control-plane",
+    "workflow": "harden-control-plane",
+    "status": "ready",
+    "generatedAt": "2026-07-22T00:00:00Z",
+    "requiredChecks": ["node"],
+    "checks": {
+      "node": {
+        "status": "ready",
+        "version": "v24",
+        "evidence": ["node --version"],
+        "reason": null
+      }
+    },
+    "secretBoundary": {
+      "valuesRecorded": true,
+      "productionAccess": false,
+      "inventory": []
+    },
+    "keyBoundary": {
+      "valuesRecorded": false,
+      "productionKeyAccess": false,
+      "inventory": []
+    },
+    "blockers": []
+  },
+  "expected": {
+    "keyword": "const",
+    "instancePath": "/secretBoundary/valuesRecorded"
+  }
+}

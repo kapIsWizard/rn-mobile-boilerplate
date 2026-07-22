@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/guardrails.schema.json",
+  "title": "Guardrail policy",
+  "type": "object",
+  "required": ["schemaVersion", "failureClasses", "roleSeparation", "forbiddenSignals"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "failureClasses": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "roleSeparation": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } }
+    },
+    "forbiddenSignals": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": false
+}

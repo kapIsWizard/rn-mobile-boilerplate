@@ -6,25 +6,28 @@ The system is intentionally evidence-driven: source code is not considered deliv
 
 ## Current status
 
-Phase 0 is implemented:
+The Phase 0 kernel and hardening implementation are complete locally; Phase 0 remains open at H2 until the dedicated GitHub App, protected environments, trusted-main canary, and human acceptance are proven:
 
 - deterministic workflow state and revision model;
-- human gates for specification, functional acceptance, and final release QA;
+- externally verifiable GitHub protected-environment gates for specification, functional acceptance, and final release QA, plus one allowlisted local bootstrap H1;
+- strict Draft 2020-12 JSON Schema ownership and validation for controlled JSON, with focused negative fixtures;
+- workflow-aware control-plane and native preflight profiles;
 - artifact-digest invalidation of stale approvals;
 - an environment-readiness gate that blocks planning until native toolchains, devices, isolated services, IDs, and secret boundaries are proven;
 - bounded retries, failure taxonomy, and circuit breakers;
 - workflow audit telemetry;
 - role-separated project skills for specification, orchestration, implementation, React Native debugging, `agent-device` operation, independent verification, review, documentation research, native release, and agent-behavior auditing;
 - a first-principles data-protection model with P0–P4 patterns, a dedicated security-architect skill, H1-bound contracts, key-metadata-only preflight, cryptographic evidence, and a gated key-rotation workflow;
-- starter workflows for a new app, an existing app, feature development, E2E coverage, design implementation, bug fixing, release, and Expo SDK upgrades.
+- starter workflows for a new app, an existing app, feature development, E2E coverage, design implementation, bug fixing, release, Expo SDK upgrades, and control-plane hardening.
 
-Phase 1 is a critical vertical spike. Its specification lives in [`docs/requirements/phase-1-critical-spike/specification.md`](docs/requirements/phase-1-critical-spike/specification.md) and must pass the H1 human gate before application scaffolding starts.
+Phase 1 targets the reusable authentication boilerplate described in [`docs/product/boilerplate-north-star.md`](docs/product/boilerplate-north-star.md), with email, phone, Google, and Apple registration/login. The earlier private-notes spike is superseded and is retained only as historical specification material.
 
 ## Verify the control plane
 
-Requires Node.js 22 or newer. There are no runtime package dependencies yet.
+Requires Node.js 22 or newer. Install the exact reviewed validator graph from the lockfile.
 
 ```bash
+npm ci
 npm run agentic:check
 npm run agentic:monitor
 ```
@@ -43,7 +46,7 @@ npm run agentic -- digest .agentic/runs/<run-id> \
   --path docs/requirements/phase-1-critical-spike
 ```
 
-At that point work stops for H1. The `approve` command only records a decision already made by a human through the interaction surface; agents must never invoke it on a human's behalf.
+At that point work stops for H1. The local `approve` command is development-only and restricted to the explicit Phase 0 bootstrap specification run. Normal H1/H2/H3 use the GitHub protected-environment request and verifier described in [`docs/operations/github-human-gates.md`](docs/operations/github-human-gates.md).
 
 ## Repository map
 

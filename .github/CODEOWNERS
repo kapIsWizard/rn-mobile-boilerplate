@@ -1,0 +1,11 @@
+# Human-owned trust root. Branch protection must require this review on main.
+* @kapIsWizard
+/.github/ @kapIsWizard
+/.agentic/ @kapIsWizard
+/scripts/agentic/ @kapIsWizard
+/docs/requirements/ @kapIsWizard
+/docs/operations/ @kapIsWizard
+/environment/ @kapIsWizard
+/security/ @kapIsWizard
+/package.json @kapIsWizard
+/package-lock.json @kapIsWizard

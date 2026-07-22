@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "implement-design",
+  "preflightProfile": "mobile-e2e",
   "humanGates": ["specification", "acceptance", "release"],
   "stages": ["design-source-intake", "provenance-and-license", "platform-contract", "sensitive-visual-and-screen-capture-policy", "states-and-accessibility", "human-specification", "environment-preflight", "token-and-component-plan", "implementation", "semantic-native-verification", "normalized-screenshots", "regional-diff", "independent-review", "operator-visual-review", "human-acceptance", "release-candidate", "final-qa"]
 }

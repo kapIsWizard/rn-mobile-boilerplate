@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mobilka.local/schemas/visual-template.schema.json",
+  "title": "Figma visual verification template",
+  "type": "object",
+  "required": ["schemaVersion", "screen", "platform", "figma", "environment", "allowedDifferences", "requiredElements"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "screen": { "type": "string", "minLength": 1 },
+    "platform": { "enum": ["ios", "android"] },
+    "figma": {
+      "type": "object",
+      "required": ["fileKey", "nodeId"],
+      "properties": {
+        "fileKey": { "type": "string", "minLength": 1 },
+        "nodeId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": ["device", "locale", "appearance", "fontScale", "orientation", "fixture"],
+      "properties": {
+        "device": { "type": "string", "minLength": 1 },
+        "locale": { "type": "string", "minLength": 2 },
+        "appearance": { "enum": ["light", "dark"] },
+        "fontScale": { "type": "number", "exclusiveMinimum": 0 },
+        "orientation": { "enum": ["portrait", "landscape"] },
+        "fixture": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "allowedDifferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["region", "strategy"],
+        "properties": {
+          "region": { "type": "string", "minLength": 1 },
+          "strategy": { "enum": ["normalize", "mask", "ignore"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "requiredElements": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": false
+}

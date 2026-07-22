@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "name": "harden-control-plane",
+  "preflightProfile": "control-plane",
+  "humanGates": ["specification", "acceptance"],
+  "stages": [
+    "control-plane-intake",
+    "critical-risk",
+    "trust-model",
+    "specification",
+    "human-specification",
+    "control-plane-preflight",
+    "implementation-plan",
+    "contract-validation",
+    "approval-adapter",
+    "negative-tests",
+    "ci-hardening",
+    "operator-configuration",
+    "independent-verification",
+    "behavior-audit",
+    "human-acceptance"
+  ]
+}
