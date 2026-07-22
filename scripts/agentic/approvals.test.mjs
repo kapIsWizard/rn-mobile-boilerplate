@@ -120,7 +120,8 @@ test('exact protected-environment evidence persists bound provenance without cre
   const approval = await verifyFixture(fixture);
   assert.equal(approval.source, 'github-environment');
   assert.equal(approval.requestDigest, fixture.request.requestDigest);
-  assert.equal(approval.approvedById, 96981818);
+  assert.equal(approval.trustPolicyDigest, fixture.request.trustPolicyDigest);
+  assert.equal(approval.approvedById, fixture.kernel.approvalProviders.github.reviewers[0].id);
   assert.equal(JSON.stringify(approval).includes('installation-token-for-test'), false);
   assert.equal((await readRun(fixture.runDir)).approvals.specification.requestId, fixture.request.requestId);
 });
@@ -159,13 +160,29 @@ test('approval dispatch runs only from the trusted ref and carries the canonical
   assert.equal(body.ref, 'main');
   assert.equal(body.inputs.request_id, result.request.requestId);
   assert.equal(body.inputs.request_digest, result.request.requestDigest);
+  assert.equal(body.inputs.trust_policy_digest, result.request.trustPolicyDigest);
   assert.equal(body.inputs.digest_snapshot, JSON.stringify(result.request.digestSnapshot));
   assert.equal(result.workflowRunId, 12345);
+});
+
+test('approval dispatch fails before GitHub calls when repository context does not match policy', async () => {
+  const fixture = await approvalFixture();
+  let fetched = false;
+  await assert.rejects(() => requestGithubApproval(fixture.kernel, fixture.runDir, {
+    gate: 'specification',
+    fetchImpl: async () => { fetched = true; throw new Error('must not fetch'); },
+    token: 'test',
+    commitSha: fixture.commitSha,
+    now: fixture.now,
+    repositoryContext: { repository: 'different/project', repositoryId: 99, source: 'test' }
+  }), /Repository binding mismatch/);
+  assert.equal(fetched, false);
 });
 
 test('mutating any approval-bound request field fails before approval state changes', async () => {
   const mutations = [
     ['repository', (request) => { request.repository = 'attacker/other'; }],
+    ['trust policy', (request) => { request.trustPolicyDigest = 'b'.repeat(64); }],
     ['run', (request) => { request.runId = 'other-run'; }],
     ['gate', (request) => { request.gate = 'release'; request.environment = 'h3-release'; }],
     ['revision', (request) => { request.revision += 1; }],
@@ -209,11 +226,16 @@ test('bot, self, and non-allowlisted reviews fail closed', async () => {
   );
 
   const self = await approvalFixture();
-  const conflicted = { login: 'mobilka-agent[bot]', id: 4242, type: 'User' };
+  self.kernel.approvalProviders.github.agentIdentity = {
+    kind: 'GitHubApp',
+    login: 'conflicted-user',
+    id: 4242
+  };
+  const conflicted = { login: 'conflicted-user', id: 4242, type: 'User' };
   self.kernel.approvalProviders.github.reviewers = [conflicted];
   await assert.rejects(
     () => verifyFixture(self, { persist: false, reviewer: conflicted }),
-    /identity separation|keyword=const/
+    /agent identity must be distinct|identity separation/
   );
 });
 
@@ -265,7 +287,7 @@ test('trusted workflow path, branch, actor, and display title are independently 
     { path: '.github/workflows/changed.yml' },
     { head_branch: 'feature/self-authorize' },
     { display_title: 'human-gate:forged' },
-    { actor: { login: 'kapIsWizard', id: 96981818, type: 'User' } }
+    { actor: { login: 'human-reviewer', id: 8080, type: 'User' } }
   ];
   for (const run of cases) {
     const fixture = await approvalFixture();
@@ -302,5 +324,23 @@ test('feature-branch policy changes cannot replace the trusted default-branch al
     now: fixture.now + 2_000,
     persist: false
   }), /differs from the trusted default-branch policy/);
+  assert.equal((await readRun(fixture.runDir)).approvals.specification, null);
+});
+
+test('trust-root rotation invalidates an approval request even when its reviewer stays allowlisted', async () => {
+  const fixture = await approvalFixture();
+  const trustedPolicy = structuredClone(fixture.kernel.approvalProviders);
+  trustedPolicy.github.reviewers.push({ login: 'second-reviewer', id: 5151, type: 'User' });
+  fixture.kernel.approvalProviders = trustedPolicy;
+  const evidence = githubEvidence(fixture.kernel, fixture.request);
+  await assert.rejects(() => verifyGithubApproval(fixture.kernel, fixture.runDir, {
+    requestPath: fixture.requestPath,
+    workflowRunId: evidence.workflowRunId,
+    fetchImpl: evidence.fetchImpl,
+    token: 'test',
+    currentCommitSha: fixture.commitSha,
+    now: fixture.now + 2_000,
+    persist: false
+  }), /trust policy digest mismatch/);
   assert.equal((await readRun(fixture.runDir)).approvals.specification, null);
 });

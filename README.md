@@ -6,10 +6,11 @@ The system is intentionally evidence-driven: source code is not considered deliv
 
 ## Current status
 
-The Phase 0 kernel and hardening implementation are complete locally; Phase 0 remains open at H2 until the dedicated GitHub App, protected environments, trusted-main canary, and human acceptance are proven:
+The Phase 0 kernel and reusable trust-bootstrap hardening are implemented locally; Phase 0 remains open at H2 until the dedicated GitHub App, protected environments, trusted-main canary, and human acceptance are proven:
 
 - deterministic workflow state and revision model;
 - externally verifiable GitHub protected-environment gates for specification, functional acceptance, and final release QA, plus one allowlisted local bootstrap H1;
+- reusable approval schemas plus a generated per-repository policy/CODEOWNERS binding, with immutable GitHub identity resolution, origin checks, explicit trust rotation, and fail-closed clean-clone validation;
 - strict Draft 2020-12 JSON Schema ownership and validation for controlled JSON, with focused negative fixtures;
 - workflow-aware control-plane and native preflight profiles;
 - artifact-digest invalidation of stale approvals;
@@ -31,6 +32,18 @@ npm ci
 npm run agentic:check
 npm run agentic:monitor
 ```
+
+## Bind a downstream repository
+
+The committed policy in this repository is an installation-specific trust root, not a template constant. In a new clone, a human operator first supplies a short-lived metadata token through the process environment and reviews the default dry-run:
+
+```bash
+npm run agentic -- bootstrap-trust \
+  --reviewers reviewer-login \
+  --metadata-token-env GITHUB_TOKEN
+```
+
+The operator repeats the command with `--apply` only after checking the resolved repository, immutable reviewer IDs, and generated CODEOWNERS. If the GitHub App already exists, `--agent delivery-app[bot]` also binds its immutable identity; adding it later or rotating any existing binding additionally requires `--rebind`. The applied configuration stays in safe bootstrap mode until the protected GitHub controls are proven; see [`docs/operations/github-human-gates.md`](docs/operations/github-human-gates.md).
 
 ## Start a controlled run
 

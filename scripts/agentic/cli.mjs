@@ -15,6 +15,9 @@ import {
   transitionRun
 } from './lib.mjs';
 import { requestGithubApproval, verifyGithubApproval } from './approvals.mjs';
+import { applyTrustBootstrap, planTrustBootstrap } from './trust.mjs';
+
+const APPROVAL_PROVIDER_SCHEMA = 'https://mobilka.local/schemas/approval-provider-config.schema.json';
 
 function parseArguments(values) {
   const positional = [];
@@ -46,7 +49,34 @@ const { positional, options } = parseArguments(rest);
 const kernel = await loadKernel();
 
 try {
-  if (command === 'init') {
+  if (command === 'bootstrap-trust') {
+    const reviewerLogins = String(required(options.reviewers, '--reviewers login[,login] is required'))
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const tokenEnv = options['metadata-token-env'] || 'GITHUB_TOKEN';
+    const plan = await planTrustBootstrap({
+      root: kernel.root,
+      currentPolicy: kernel.approvalProviders,
+      repository: options.repository === true ? null : options.repository || null,
+      reviewerLogins,
+      agentLogin: options.agent === true ? null : options.agent || null,
+      allowRebind: options.rebind === true,
+      token: process.env[tokenEnv]
+    });
+    kernel.contracts.assertValue(APPROVAL_PROVIDER_SCHEMA, plan.policy, '<bootstrap-trust-policy>');
+    const applied = options.apply === true;
+    if (applied) {
+      await applyTrustBootstrap(kernel.root, plan);
+      await loadKernel(kernel.root);
+    }
+    print({
+      applied,
+      metadataTokenEnv: tokenEnv,
+      files: ['.agentic/approval-providers.json', '.github/CODEOWNERS'],
+      ...plan.summary
+    });
+  } else if (command === 'init') {
     const result = await initRun(kernel, {
       name: required(options.name, '--name is required'),
       risk: options.risk || kernel.config.defaultRisk,
@@ -132,7 +162,7 @@ try {
     print(report);
     if (report.status !== 'clean') process.exitCode = 2;
   } else {
-    process.stdout.write(`Usage:\n  agentic init --name <name> [--risk fast|standard|critical] [--workflow name]\n  agentic digest <run-dir> --kind spec|environment|evidence|releaseArtifact --path <path>\n  agentic approve <run-dir> --gate specification --by <human>\n  agentic workflow <run-dir> --to <workflow> [--actor agent-id]\n  agentic request-approval <run-dir> --gate specification|acceptance|release [--ttl-minutes 30]\n  agentic verify-approval <run-dir> --request <path> --workflow-run-id <id>\n  agentic transition <run-dir> --to <state> [--actor agent-id]\n  agentic attempt <run-dir> --bucket <bucket> --role <role> [--actor agent-id] [--evidence a,b]\n  agentic failure <run-dir> --class <class> --signature <hash> [--actor agent-id] [--evidence a,b]\n  agentic violation <run-dir> --signal <forbidden-signal> --role <role> --evidence <paths> [--actor agent-id]\n  agentic resume <run-dir> --by <human> --reason <reason> [--budget <bucket> --limit <n>]\n  agentic audit <run-dir>\n  agentic monitor\n`);
+    process.stdout.write(`Usage:\n  agentic bootstrap-trust --reviewers login[,login] [--repository owner/name] [--agent app[bot]] [--metadata-token-env GITHUB_TOKEN] [--rebind] [--apply]\n  agentic init --name <name> [--risk fast|standard|critical] [--workflow name]\n  agentic digest <run-dir> --kind spec|environment|evidence|releaseArtifact --path <path>\n  agentic approve <run-dir> --gate specification --by <human>\n  agentic workflow <run-dir> --to <workflow> [--actor agent-id]\n  agentic request-approval <run-dir> --gate specification|acceptance|release [--ttl-minutes 30]\n  agentic verify-approval <run-dir> --request <path> --workflow-run-id <id>\n  agentic transition <run-dir> --to <state> [--actor agent-id]\n  agentic attempt <run-dir> --bucket <bucket> --role <role> [--actor agent-id] [--evidence a,b]\n  agentic failure <run-dir> --class <class> --signature <hash> [--actor agent-id] [--evidence a,b]\n  agentic violation <run-dir> --signal <forbidden-signal> --role <role> --evidence <paths> [--actor agent-id]\n  agentic resume <run-dir> --by <human> --reason <reason> [--budget <bucket> --limit <n>]\n  agentic audit <run-dir>\n  agentic monitor\n`);
   }
 } catch (error) {
   process.stderr.write(`${error.message}\n`);

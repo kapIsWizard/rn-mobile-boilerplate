@@ -3,7 +3,7 @@
   "profile": "control-plane",
   "workflow": "harden-control-plane",
   "status": "ready",
-  "generatedAt": "2026-07-21T23:33:05Z",
+  "generatedAt": "2026-07-22T01:22:31Z",
   "requiredChecks": [
     "node",
     "packageManager",
@@ -11,6 +11,7 @@
     "baseline",
     "ciPolicy",
     "approvalProviderTarget",
+    "trustBootstrapInputs",
     "productionBoundary"
   ],
   "checks": {
@@ -34,8 +35,8 @@
     },
     "baseline": {
       "status": "ready",
-      "version": "13 tests",
-      "evidence": ["npm run agentic:check", "npm run agentic:monitor", "phase-0 H1 digest f7f5583795f96962f6beb44da7cfa6a48bb69afd7faedd6e092a59bc575848e8"],
+      "version": "29 tests",
+      "evidence": ["npm run agentic:check", "npm run agentic:monitor", "phase-0 revision 2 H1 digest 6596cb8dcf4efceaa5e9085d004a03b3acdb7c392b09c1a1b38231ddda6d5366"],
       "reason": null
     },
     "ciPolicy": {
@@ -46,9 +47,15 @@
     },
     "approvalProviderTarget": {
       "status": "ready",
-      "version": "github-environment-v1-proposed",
+      "version": "github-environment-v1-revision-2",
       "evidence": ["docs/requirements/phase-0-hardening/architecture-decisions.md#adr-hard-003--github-protected-environments-for-h1h2h3", "human reviewer kapIsWizard; separate agent GitHub App required before H2"],
       "reason": "Architecture and ownership metadata are ready for implementation; live environment, GitHub App, and canary are H2 exit evidence, not pre-existing implementation inputs."
+    },
+    "trustBootstrapInputs": {
+      "status": "ready",
+      "version": "repository-binding-v1",
+      "evidence": ["origin git@github.com:kapIsWizard/rn-mobile-boilerplate.git", "repository ID 1308181084", "human reviewer kapIsWizard immutable user ID 96981818", "ADR-HARD-006 generic policy plus generated repository binding"],
+      "reason": "Only non-secret identity metadata is in scope. A dedicated agent GitHub App identity and live protected environments remain required H2 operator evidence; enforced mode must stay disabled until they exist."
     },
     "productionBoundary": {
       "status": "ready",

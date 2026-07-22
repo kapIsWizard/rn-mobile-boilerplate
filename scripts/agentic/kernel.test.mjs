@@ -302,6 +302,35 @@ test('control-plane preflight succeeds truthfully without native application ide
   assert.equal((await transitionRun(kernel, runDir, 'PLANNED')).state, 'PLANNED');
 });
 
+test('planning fails closed when the committed trust policy belongs to another repository', async () => {
+  const { kernel, artifactRoot } = await testKernel();
+  const { runDir } = await initRun(kernel, { name: 'inherited trust binding', risk: 'critical', workflow: 'harden-control-plane' });
+  const spec = path.join(artifactRoot, 'spec.md');
+  const environment = path.join(artifactRoot, 'control-plane.json');
+  await writeFile(spec, '# Control-plane specification\n');
+  await transitionRun(kernel, runDir, 'SPEC_PENDING');
+  await setRunDigest(kernel, runDir, 'spec', spec);
+  await approveBootstrapSpecification(kernel, runDir);
+  await transitionRun(kernel, runDir, 'SPEC_APPROVED');
+  await transitionRun(kernel, runDir, 'PREFLIGHTING');
+  await writeFile(environment, `${JSON.stringify({
+    schemaVersion: 1,
+    profile: 'control-plane',
+    workflow: 'harden-control-plane',
+    status: 'ready',
+    generatedAt: new Date().toISOString(),
+    requiredChecks: ['node'],
+    checks: { node: { status: 'ready', version: process.version, evidence: ['node --version'], reason: null } },
+    secretBoundary: { valuesRecorded: false, productionAccess: false, inventory: [] },
+    keyBoundary: { valuesRecorded: false, productionKeyAccess: false, inventory: [] },
+    blockers: []
+  }, null, 2)}\n`);
+  await setRunDigest(kernel, runDir, 'environment', environment);
+  kernel.approvalProviders.github.repository = 'source-template/inherited-repository';
+  await assert.rejects(() => transitionRun(kernel, runDir, 'PLANNED'), /Repository binding mismatch/);
+  assert.equal((await readRun(runDir)).state, 'PREFLIGHTING');
+});
+
 test('mobile workflow cannot bypass native readiness with the control-plane profile', async () => {
   const { kernel, artifactRoot } = await testKernel();
   const { runDir } = await initRun(kernel, { name: 'mobile bypass', risk: 'critical', workflow: 'develop-feature' });

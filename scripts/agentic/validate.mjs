@@ -2,6 +2,12 @@ import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadJson } from './lib.mjs';
 import { createContractValidator } from './contracts.mjs';
+import {
+  assertCodeownersBinding,
+  assertRepositoryBinding,
+  readRepositoryContext,
+  validateTrustPolicyInvariants
+} from './trust.mjs';
 
 const root = process.cwd();
 const errors = [];
@@ -62,14 +68,13 @@ if (config && stateMachine) {
 }
 
 if (approvalProviders) {
-  if (approvalProviders.manual.allowedGates.some((gate) => gate !== 'specification')) {
-    errors.push('approval providers: manual adapter may authorize only the bootstrap specification gate');
-  }
-  if (approvalProviders.mode === 'enforced' && approvalProviders.manual.enabled) {
-    errors.push('approval providers: enforced mode must disable manual approval');
-  }
-  if (approvalProviders.github.agentIdentity.login === 'kapIsWizard' || approvalProviders.github.agentIdentity.id === 96981818) {
-    errors.push('approval providers: agent identity must be distinct from the human reviewer');
+  try {
+    validateTrustPolicyInvariants(approvalProviders);
+    assertRepositoryBinding(approvalProviders, await readRepositoryContext(root));
+    const codeowners = await readFile(path.join(root, '.github/CODEOWNERS'), 'utf8');
+    assertCodeownersBinding(codeowners, approvalProviders.github.reviewers);
+  } catch (error) {
+    errors.push(error.message);
   }
 }
 
@@ -163,6 +168,7 @@ try {
   for (const expected of [
     'workflow_dispatch:',
     'run-name: human-gate:${{ inputs.gate }}:${{ inputs.request_id }}:${{ inputs.request_digest }}',
+    'trust_policy_digest:',
     'name: h1-specification',
     'name: h2-acceptance',
     'name: h3-release',

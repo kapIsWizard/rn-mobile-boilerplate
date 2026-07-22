@@ -85,6 +85,9 @@ Each business requirement should be traceable to a scenario, implementation unit
 - MCP is interactive and may be unavailable. CI uses pinned CLIs or APIs.
 - Supabase MCP is development/test scoped and read-only by default.
 - Device artifacts may contain credentials or personal data and are ignored by git.
+- Approval schemas and invariants are reusable source policy; `.agentic/approval-providers.json` and `.github/CODEOWNERS` form a generated, installation-specific trust binding.
+- Trust bootstrap is dry-run by default and resolves immutable repository/reviewer/app IDs from GitHub. A human applies the pair atomically; rotating an existing binding requires explicit `--rebind` authority.
+- Validation binds the committed policy to the authenticated `origin`, immutable repository ID, and exact CODEOWNERS set. An inherited or partially edited binding fails closed before a GitHub approval request.
 - Approval files are audit records, not identity by themselves. Enforced gates require exact, unexpired GitHub protected-environment evidence from an allowlisted human distinct from the requesting GitHub App, with trusted-main policy and single-use consumption.
 - Store submission, production migrations, credentials, rollout, and baseline changes are gated operations.
 - RLS/authorization, provider at-rest encryption, local secure storage, server envelope encryption, and client E2EE are separate claims with separate oracles.

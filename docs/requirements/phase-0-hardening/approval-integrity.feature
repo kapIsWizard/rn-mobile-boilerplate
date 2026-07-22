@@ -98,3 +98,69 @@ Feature: Externally verifiable human approval
     Then the trusted default-branch policy remains authoritative
     And the changed branch cannot self-authorize
 
+  @id:SCN-HARD-016
+  @requirement:REQ-HARD-011
+  @approval @template
+  Scenario: Generic policy contracts accept independent repository bindings
+    Given two installations have different repository IDs, human reviewers, CODEOWNERS, and agent app identities
+    When both installation policies are validated without modifying reusable source code
+    Then both policies satisfy the same generic security contract
+    And neither installation identity appears as a constant in the generic schema, validator, adapter, or reusable assertions
+
+  @id:SCN-HARD-017
+  @requirement:REQ-HARD-012
+  @approval @template @fail-closed
+  Scenario Outline: An inherited or mismatched trust root cannot request approval
+    Given a downstream project still contains <inherited metadata> from its source template
+    And its actual repository context identifies a different project
+    When preflight or approval dispatch validates the repository binding
+    Then the operation fails before a gate request is sent
+    And the diagnostic identifies the mismatched trust category without exposing credentials
+
+    Examples:
+      | inherited metadata |
+      | repository ID      |
+      | reviewer allowlist |
+      | CODEOWNERS         |
+      | agent identity     |
+      | approval evidence  |
+      | run state          |
+
+  @id:SCN-HARD-018
+  @requirement:REQ-HARD-012
+  @approval @bootstrap
+  Scenario: Bootstrap replaces inherited trust metadata for a fresh project
+    Given a human authorizes bootstrap for an exact non-production repository
+    And GitHub resolves the repository and human reviewers to immutable IDs
+    When the bootstrap command generates the installation policy and CODEOWNERS
+    Then every generated trust field belongs to the target repository
+    And inherited approvals and run state are absent
+    And no credential value is written to source, logs, or evidence
+    And enforced approvals remain disabled until the generated trust root is reviewed on the protected default branch
+
+  @id:SCN-HARD-019
+  @requirement:REQ-HARD-007 @requirement:REQ-HARD-012
+  @approval @bootstrap @identity
+  Scenario Outline: Bootstrap rejects an unsafe identity binding
+    Given the proposed installation binding contains <condition>
+    When bootstrap validates identity separation
+    Then no trust-root file is changed
+    And the installation remains fail-closed
+
+    Examples:
+      | condition                              |
+      | an empty human reviewer allowlist      |
+      | duplicate reviewer immutable IDs       |
+      | a bot as the human reviewer            |
+      | the agent identity as a human reviewer |
+      | an unavailable identity lookup         |
+
+  @id:SCN-HARD-020
+  @requirement:REQ-HARD-013
+  @approval @rotation
+  Scenario: Rebinding trust invalidates prior approval evidence
+    Given a repository already has a trusted reviewer and agent binding
+    When a human-authorized change rotates the repository, reviewer, CODEOWNER, or agent identity
+    Then prior gate approvals cannot authorize the new binding
+    And the generated trust-root diff requires protected default-branch review
+    And a new canary is required before H2 or H3 can rely on the binding

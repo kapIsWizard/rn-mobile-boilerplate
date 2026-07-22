@@ -1,6 +1,6 @@
 # Phase 0 hardening — architecture decisions
 
-Status: proposed for H1
+Status: revision 2 proposed for H1
 
 ## ADR-HARD-001 — strict JSON Schema runtime
 
@@ -40,7 +40,7 @@ Consequences: repository environment configuration becomes required operator evi
 
 ## ADR-HARD-004 — identity and permission split
 
-**Decision:** the agent uses a dedicated GitHub App installation with repository-scoped, least-privileged permissions. The human uses the `kapIsWizard` account. The current SSH key is human/bootstrap identity only and must not be configured as the agent's operational identity.
+**Decision:** the agent uses a dedicated GitHub App installation with repository-scoped, least-privileged permissions. Human reviewers are an installation-specific allowlist of distinct GitHub users pinned by login and immutable user ID. This repository's generated deployment policy binds `kapIsWizard`; that identity is not a generic control-plane constant. The current SSH key is human/bootstrap identity only and must not be configured as the agent's operational identity.
 
 The agent app may create branches, commits, pull requests, and gate requests only where allowed. It cannot review its own request, modify protected default-branch policy directly, administer environments, read signing secrets, or bypass required checks. Installation tokens are minted just in time and never written to evidence. The workflow token is read-only by default and GitHub Actions is not permitted to approve pull requests.
 
@@ -52,11 +52,28 @@ Protected paths include `.github/`, `.agentic/`, validation code, approval adapt
 
 Why: readiness is contextual. A control-plane change should prove Node, CI, schema, and provider configuration, while a mobile change must prove native toolchains, devices, build identity, fixtures, and backend boundaries. One universal manifest either lies or becomes unusably optional.
 
-## ADR-HARD-006 — observability boundary
+## ADR-HARD-006 — generic policy plus generated repository binding
+
+**Decision:** separate reusable security invariants from the committed trust binding of a concrete repository. Generic schemas, validators, adapter code, and reusable tests contain no repository, owner, reviewer-login, numeric identity, or CODEOWNER constants. A deterministic `bootstrap-trust` CLI resolves non-secret GitHub metadata and atomically generates the exact repository policy plus CODEOWNERS for review on the protected default branch.
+
+The generated policy remains committed because approval verification must compare local state with the trusted default-branch copy. A downstream clone is therefore deliberately unusable for enforced approvals until bootstrap replaces the inherited repository, reviewer, CODEOWNER, agent, approval, and run metadata and repository-context validation passes.
+
+V1 supports one or more explicitly allowlisted human users; one matching protected-environment approval satisfies a gate. Team-derived trust and multi-party quorum require a separate evidence model and are not silently inferred from team names.
+
+Alternatives:
+
+- keep one global `kapIsWizard` trust root: rejected because it violates clean-template isolation and grants the source owner unintended downstream authority;
+- leave the deployment policy untracked: rejected because a local file cannot be the trusted default-branch approval policy;
+- use placeholders accepted by runtime validation: rejected because a partially bound template could dispatch an ambiguous gate request;
+- trust logins without immutable IDs: rejected because names are mutable and insufficient for durable identity binding.
+
+Consequences: bootstrap and rebind are protected installation workflows, not ordinary run initialization. They must fail closed on repository mismatch, bot/conflicted reviewers, duplicate identities, incomplete replacement, GitHub API failure, or any attempt to record token values. Changing the binding invalidates downstream approval evidence.
+
+## ADR-HARD-007 — observability boundary
 
 **Decision:** defer OpenTelemetry export to Phase 2. Phase 1 continues to require structured JSONL events, durable run state, failure signatures, iteration/time/tool budgets, circuit breakers, monitoring, and an independent behavior audit.
 
-Why: an exporter changes transport and operations but does not close the two current trust gaps. Adding it now increases bootstrap scope without making approvals or contracts credible.
+Why: an exporter changes transport and operations but does not close the current trust and reusability gaps. Adding it now increases bootstrap scope without making approvals or contracts credible.
 
 Revisit when parallel/remote executions or cross-run service-level objectives require a shared telemetry backend.
 
@@ -65,9 +82,9 @@ Revisit when parallel/remote executions or cross-run service-level objectives re
 | Actor/system | May do | Must not do |
 |---|---|---|
 | Human reviewer | approve protected environment, review trust-root changes, perform H2/H3 | share reviewer credentials with agent |
+| Trust bootstrap operator | bind repository and immutable identities, review generated diff | reuse inherited policy, record credentials, or self-approve the generated trust root |
 | Agent GitHub App | create scoped changes and approval requests | approve, administer environments, bypass protection |
 | Gate workflow | present immutable request and expose provider evidence | rewrite request fields or trust feature-branch policy |
 | Workflow token | read metadata and run required checks | approve PRs or gain broad write permission |
 | Local kernel | verify, persist provenance, enforce transitions | treat local text as enforced human identity |
 | GitHub | source external reviewer/run facts | decide our digest-binding policy implicitly |
-

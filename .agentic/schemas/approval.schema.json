@@ -24,6 +24,7 @@
     },
     "requestId": { "type": "string", "format": "uuid" },
     "requestDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "trustPolicyDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "commitSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
     "expiresAt": { "type": "string", "format": "date-time" },
     "verifiedAt": { "type": "string", "format": "date-time" },
@@ -57,12 +58,13 @@
           "approvedById": {},
           "requestId": {},
           "requestDigest": {},
+          "trustPolicyDigest": {},
           "commitSha": {},
           "expiresAt": {},
           "verifiedAt": {},
           "provider": {}
         },
-        "required": ["approvedById", "requestId", "requestDigest", "commitSha", "expiresAt", "verifiedAt", "provider"]
+        "required": ["approvedById", "requestId", "requestDigest", "trustPolicyDigest", "commitSha", "expiresAt", "verifiedAt", "provider"]
       }
     },
     {

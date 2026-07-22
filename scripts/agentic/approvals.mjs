@@ -11,6 +11,11 @@ import {
   recordExternalApproval,
   writeJsonAtomic
 } from './lib.mjs';
+import {
+  assertRepositoryBinding,
+  readRepositoryContext,
+  validateTrustPolicyInvariants
+} from './trust.mjs';
 
 const execFileAsync = promisify(execFile);
 const REQUEST_SCHEMA = 'https://mobilka.local/schemas/approval-request.schema.json';
@@ -91,6 +96,7 @@ async function loadTrustedApprovalProviders(kernel, fetchImpl, token) {
     throw new Error(`GitHub trusted approval policy is not valid JSON: ${error.message}`);
   }
   kernel.contracts.assertValue(PROVIDER_SCHEMA, trusted, `${github.trustedRef}:${policyPath}`);
+  validateTrustPolicyInvariants(trusted);
   if (digestValue(trusted) !== digestValue(local)) {
     throw new Error('Local approval policy differs from the trusted default-branch policy');
   }
@@ -115,6 +121,7 @@ export function createApprovalRequest(kernel, state, {
     provider: 'github-environment',
     repository: github.repository,
     repositoryId: github.repositoryId,
+    trustPolicyDigest: digestValue(kernel.approvalProviders),
     runId: state.id,
     gate,
     revision: state.revision,
@@ -138,13 +145,17 @@ export async function requestGithubApproval(kernel, runDir, {
   fetchImpl = globalThis.fetch,
   token = process.env[kernel.approvalProviders.github.tokenEnv],
   now = Date.now(),
-  commitSha = null
+  commitSha = null,
+  repositoryContext = null
 }) {
   const localGithub = kernel.approvalProviders.github;
   if (!localGithub.enabled) throw new Error('GitHub approval provider is not enabled');
   if (!localGithub.agentIdentity.login || !localGithub.agentIdentity.id) throw new Error('GitHub App agent identity is not configured');
   if (!token) throw new Error(`Missing ${localGithub.tokenEnv}; approval request was not dispatched`);
+  const actualRepository = repositoryContext || await readRepositoryContext(kernel.root);
+  assertRepositoryBinding(kernel.approvalProviders, actualRepository);
   const trustedProviders = await loadTrustedApprovalProviders(kernel, fetchImpl, token);
+  assertRepositoryBinding(trustedProviders, actualRepository);
   const github = trustedProviders.github;
   const state = await readRun(runDir, kernel);
   if (commitSha === null) await assertCleanWorktree(kernel.root);
@@ -163,6 +174,7 @@ export async function requestGithubApproval(kernel, runDir, {
       ref: github.trustedRef.replace('refs/heads/', ''),
       inputs: {
         repository_id: String(request.repositoryId),
+        trust_policy_digest: request.trustPolicyDigest,
         run_id: request.runId,
         gate: request.gate,
         revision: String(request.revision),
@@ -186,11 +198,13 @@ export async function requestGithubApproval(kernel, runDir, {
   return { request, requestPath, workflowRunId: response.workflow_run_id, workflowRunUrl: response.html_url };
 }
 
-function assertCurrentRequest(kernel, state, request, currentCommitSha, now, github) {
+function assertCurrentRequest(kernel, state, request, currentCommitSha, now, trustedPolicy) {
+  const github = trustedPolicy.github;
   kernel.contracts.assertValue(REQUEST_SCHEMA, request, '<approval-request>');
   assertExact('Approval request digest', request.requestDigest, calculateRequestDigest(request));
   assertExact('Approval repository', request.repository, github.repository);
   assertExact('Approval repository ID', request.repositoryId, github.repositoryId);
+  assertExact('Approval trust policy digest', request.trustPolicyDigest, digestValue(trustedPolicy));
   assertExact('Approval run', request.runId, state.id);
   assertExact('Approval revision', request.revision, state.revision);
   assertExact('Approval commit', request.commitSha, currentCommitSha);
@@ -228,7 +242,8 @@ export async function verifyGithubApproval(kernel, runDir, {
   token = process.env[kernel.approvalProviders.github.tokenEnv],
   now = Date.now(),
   currentCommitSha = null,
-  persist = true
+  persist = true,
+  repositoryContext = null
 }) {
   const localGithub = kernel.approvalProviders.github;
   if (!localGithub.enabled) throw new Error('GitHub approval provider is not enabled');
@@ -236,13 +251,16 @@ export async function verifyGithubApproval(kernel, runDir, {
   if (!token) throw new Error(`Missing ${localGithub.tokenEnv}; approval verification fails closed`);
   if (!Number.isInteger(workflowRunId) || workflowRunId < 1) throw new Error('Workflow run ID must be a positive integer');
 
+  const actualRepository = repositoryContext || await readRepositoryContext(kernel.root);
+  assertRepositoryBinding(kernel.approvalProviders, actualRepository);
   const trustedProviders = await loadTrustedApprovalProviders(kernel, fetchImpl, token);
+  assertRepositoryBinding(trustedProviders, actualRepository);
   const github = trustedProviders.github;
   const state = await readRun(runDir, kernel);
   const request = JSON.parse(await readFile(path.resolve(requestPath), 'utf8'));
   if (currentCommitSha === null) await assertCleanWorktree(kernel.root);
   const currentCommit = currentCommitSha || await gitHead(kernel.root);
-  assertCurrentRequest(kernel, state, request, currentCommit, now, github);
+  assertCurrentRequest(kernel, state, request, currentCommit, now, trustedProviders);
 
   const [owner, repository] = github.repository.split('/');
   const base = `${github.apiBaseUrl}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/actions/runs/${workflowRunId}`;
@@ -283,6 +301,7 @@ export async function verifyGithubApproval(kernel, runDir, {
     digestSnapshot: request.digestSnapshot,
     requestId: request.requestId,
     requestDigest: request.requestDigest,
+    trustPolicyDigest: request.trustPolicyDigest,
     commitSha: request.commitSha,
     expiresAt: request.expiresAt,
     verifiedAt,
@@ -317,7 +336,7 @@ export async function reverifyRecordedApproval(kernel, runDir, approval, options
     workflowRunId: approval.provider.workflowRunId,
     persist: false
   });
-  for (const field of ['gate', 'approvedBy', 'approvedById', 'requestId', 'requestDigest', 'commitSha']) {
+  for (const field of ['gate', 'approvedBy', 'approvedById', 'requestId', 'requestDigest', 'trustPolicyDigest', 'commitSha']) {
     assertExact(`Reverified approval ${field}`, verified[field], approval[field]);
   }
   return verified;

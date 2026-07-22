@@ -2,6 +2,11 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createContractValidator } from './contracts.mjs';
+import {
+  assertRepositoryBinding,
+  readRepositoryContext,
+  validateTrustPolicyInvariants
+} from './trust.mjs';
 
 const SCHEMAS = {
   config: 'https://mobilka.local/schemas/agentic-config.schema.json',
@@ -32,6 +37,7 @@ export async function loadKernel(root = process.cwd()) {
   contracts.assertValue(SCHEMAS.stateMachine, stateMachine, '.agentic/policies/state-machine.json');
   contracts.assertValue(SCHEMAS.guardrails, guardrails, '.agentic/policies/guardrails.json');
   contracts.assertValue(SCHEMAS.approvalProviders, approvalProviders, '.agentic/approval-providers.json');
+  validateTrustPolicyInvariants(approvalProviders);
   return { root, agenticRoot, config, stateMachine, guardrails, approvalProviders, contracts };
 }
 
@@ -372,6 +378,9 @@ export async function transitionRun(kernel, runDir, to, role = 'orchestrator', a
   if (activeGate) verifiedGates.set(activeGate, await assertApprovalForTransition(kernel, runDir, state, activeGate));
   const rule = transitionRule(kernel.stateMachine, state.state, to);
   if (!rule) throw new Error(`Invalid transition: ${state.state} -> ${to}`);
+  if (to === 'PLANNED') {
+    assertRepositoryBinding(kernel.approvalProviders, await readRepositoryContext(kernel.root));
+  }
   if (rule.requiresDigest && !state.digests[rule.requiresDigest]) throw new Error(`Transition requires ${rule.requiresDigest} digest`);
   if (rule.requiresReadyEnvironment) {
     const source = state.digestSources.environment;

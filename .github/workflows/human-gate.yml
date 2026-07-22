@@ -8,6 +8,10 @@ on:
         description: Immutable GitHub repository ID
         required: true
         type: string
+      trust_policy_digest:
+        description: SHA-256 of the trusted approval policy
+        required: true
+        type: string
       run_id:
         description: Agentic run ID
         required: true
@@ -64,7 +68,8 @@ jobs:
         env:
           REQUEST_ID: ${{ inputs.request_id }}
           REQUEST_DIGEST: ${{ inputs.request_digest }}
-        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST"
+          TRUST_POLICY_DIGEST: ${{ inputs.trust_policy_digest }}
+        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST" && test -n "$TRUST_POLICY_DIGEST"
 
   acceptance:
     if: inputs.gate == 'acceptance'
@@ -77,7 +82,8 @@ jobs:
         env:
           REQUEST_ID: ${{ inputs.request_id }}
           REQUEST_DIGEST: ${{ inputs.request_digest }}
-        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST"
+          TRUST_POLICY_DIGEST: ${{ inputs.trust_policy_digest }}
+        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST" && test -n "$TRUST_POLICY_DIGEST"
 
   release:
     if: inputs.gate == 'release'
@@ -90,4 +96,5 @@ jobs:
         env:
           REQUEST_ID: ${{ inputs.request_id }}
           REQUEST_DIGEST: ${{ inputs.request_digest }}
-        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST"
+          TRUST_POLICY_DIGEST: ${{ inputs.trust_policy_digest }}
+        run: test -n "$REQUEST_ID" && test -n "$REQUEST_DIGEST" && test -n "$TRUST_POLICY_DIGEST"
