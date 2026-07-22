@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "runId": "2026-07-21T23-15-40-015Z-phase-0-hardening",
-  "commitSha": "380f00d3b89f9e075e1346729b579258790c9cf6",
-  "generatedAt": "2026-07-22T00:42:47Z",
+  "commitSha": "3adf5ba97047c861e2c3f6b2b56f9408cefcae4f",
+  "generatedAt": "2026-07-22T00:51:49Z",
   "requirements": [
     {
       "id": "REQ-HARD-001",
@@ -31,7 +31,7 @@
     {
       "id": "REQ-HARD-005",
       "status": "verified",
-      "evidence": ["scripts/agentic/approvals.mjs", "scripts/agentic/approvals.test.mjs"],
+      "evidence": ["scripts/agentic/approvals.mjs", "scripts/agentic/approvals.test.mjs", "clean-worktree commit binding"],
       "reason": null
     },
     {
